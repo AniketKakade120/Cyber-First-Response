@@ -1,0 +1,6 @@
+import { PageIntro } from '../../../components/page-intro';
+import { ServiceLayout } from '../../../components/service-layout';
+
+export default function AnonymousPage() {
+  return <ServiceLayout><div className="ux4g-container page-section narrow-page"><PageIntro eyebrow="Anonymous reporting" title="Understand eligibility and trade-offs" description="Some incident types may allow reporting with limited identity details. Available options depend on the incident and current reporting rules." /><section className="guidance-card"><h2>What to know</h2><ul><li>Eligibility depends on the type of incident.</li><li>Tracking and follow-up may be limited without contact information.</li><li>Anonymous reporting does not necessarily mean no technical data is processed.</li><li>You can preserve evidence before deciding how to report.</li></ul></section><div className="ux4g-alert ux4g-alert-info ux4g-context-alert"><div className="ux4g-alert-content"><h2 className="ux4g-alert-title">Need help choosing?</h2><p className="ux4g-alert-message">Start with what happened. You can review the available reporting options before providing identity information.</p><a className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-md" href="/report">Choose an incident type</a></div></div></div></ServiceLayout>;
+}

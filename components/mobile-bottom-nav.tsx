@@ -1,0 +1,2 @@
+const items = [['home', 'Home', '/'], ['edit_document', 'Report', '/report'], ['search', 'Track', '/track'], ['fact_check', 'Check', '/check'], ['support_agent', 'Help', '/help']] as const;
+export function MobileBottomNav() { return <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{items.map(([icon, label, href]) => <a href={href} key={href}><span className="ux4g-icon-outlined" aria-hidden="true">{icon}</span><span>{label}</span></a>)}</nav>; }
