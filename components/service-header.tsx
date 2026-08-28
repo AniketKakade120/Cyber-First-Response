@@ -28,15 +28,16 @@ export function ServiceHeader() {
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to main content</a>
-      <header className="ux4g-topbar" role="banner">
+      <header className="ux4g-topbar service-utility" role="banner">
         <div className="ux4g-container">
           <div className="ux4g-topbar__wrap ux4g-d-flex ux4g-jc-between ux4g-ai-center">
-            <span className="ux4g-label-m-strong">Cyber safety and incident support</span>
+            <nav aria-label="Emergency contacts" className="utility-contacts ux4g-d-flex ux4g-ai-center ux4g-gap-x-l">
+              <a className="ux4g-label-m-default ux4g-topbar__skip" href="tel:1930"><span>Financial cyber fraud</span><strong>1930</strong></a>
+              <span className="ux4g-bl-1 acc-top-divider" aria-hidden="true" />
+              <a className="ux4g-label-m-default ux4g-topbar__skip" href="tel:112"><span>Emergency</span><strong>112</strong></a>
+            </nav>
             <nav aria-label="Top utilities" className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-xs">
-              <a className="ux4g-label-m-default ux4g-topbar__skip" href="tel:112">Emergency: 112</a>
-              <span className="ux4g-bl-1 acc-top-divider" aria-hidden="true" />
-              <a className="ux4g-label-m-default ux4g-topbar__skip" href="tel:1930">Financial fraud: 1930</a>
-              <span className="ux4g-bl-1 acc-top-divider" aria-hidden="true" />
+              <span className="limited-language ux4g-label-m-default"><span className="ux4g-icon-outlined" aria-hidden="true">language</span> English · हिन्दी</span>
               <div aria-label="Text size controls" className="ux4g-topbar__group ux4g-d-flex ux4g-ai-center" role="group">
                 <button aria-label="Decrease text size" className="ux4g-topbar__iconbtn ux4g-d-flex ux4g-jc-center ux4g-ai-center" onClick={() => resizeText(-12.5)} type="button"><span aria-hidden="true">A−</span></button>
                 <button aria-label="Reset text size" className="ux4g-topbar__iconbtn ux4g-d-flex ux4g-jc-center ux4g-ai-center" onClick={() => { document.documentElement.style.fontSize = '100%'; }} type="button"><span aria-hidden="true">A</span></button>
@@ -45,7 +46,6 @@ export function ServiceHeader() {
               <button className="ux4g-topbar__selectbtn ux4g-d-inline-flex ux4g-ai-center" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} type="button" aria-label={`Use ${theme === 'light' ? 'dark' : 'light'} theme`}>
                 <span className="ux4g-icon-outlined" aria-hidden="true">{theme === 'light' ? 'dark_mode' : 'light_mode'}</span>
               </button>
-              <span className="limited-language ux4g-label-m-default">English · हिन्दी</span>
             </nav>
           </div>
         </div>
@@ -55,12 +55,12 @@ export function ServiceHeader() {
         <div className="ux4g-container">
           <div className="ux4g-navbar-wrap">
             <a className="site-brand ux4g-d-flex ux4g-ai-center ux4g-gap-x-s" href="/">
-              <span className="brand-mark ux4g-d-flex ux4g-jc-center ux4g-ai-center" aria-hidden="true"><span className="ux4g-icon-outlined">health_and_safety</span></span>
-              <span className="ux4g-d-flex ux4g-flex-column"><span className="ux4g-label-m-strong">Cyber First Response</span><span className="ux4g-body-xs-default brand-description">Citizen-first cyber help</span></span>
+              <span className="brand-mark ux4g-d-flex ux4g-jc-center ux4g-ai-center" aria-hidden="true"><span className="ux4g-icon-outlined">hub</span></span>
+              <span className="brand-wordmark ux4g-d-flex ux4g-flex-column"><span>Cyber</span><span>First Response</span></span>
             </a>
             <div className="ux4g-navbar-desktop">
               <div className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-l">
-                <ul className="ux4g-navbar-links">{links.slice(0, 4).map(([href, label]) => <li key={href}><a className="ux4g-text-link-sm" href={href}>{label}</a></li>)}</ul>
+                <ul className="ux4g-navbar-links">{links.map(([href, label]) => <li key={href}><a className="ux4g-text-link-sm" href={href}>{label}</a></li>)}</ul>
                 <a className="ux4g-btn ux4g-btn-primary ux4g-btn-md" href="/report">Report an incident</a>
               </div>
             </div>

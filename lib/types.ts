@@ -56,32 +56,6 @@ export type IncidentDraft = {
   savedAt: string | null;
 };
 
-export type TimelineEvent = {
-  title: string;
-  at: string;
-  organisation: string;
-  meaning: string;
-  action: string;
-  state: 'complete' | 'current' | 'pending';
-};
-
-export type Complaint = {
-  acknowledgement: 'CFR-2026-001';
-  summary: string;
-  amount: number;
-  submittedAt: string;
-  lastUpdated: string;
-  status: string;
-  moneyStatus: {
-    reported: number;
-    holdRequest: string;
-    confirmedOnHold: number;
-    refundAuthorised: false;
-    citizenAction: string;
-  };
-  timeline: TimelineEvent[];
-};
-
 export type Escalation = {
   acknowledgement: string;
   reason: string;

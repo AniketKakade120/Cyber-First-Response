@@ -36,3 +36,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# project-local design skills and review evidence
+/.agents/
+/.impeccable/*
+!/.impeccable/design.json

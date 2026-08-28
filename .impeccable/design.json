@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-28T08:52:27.9803610+05:30",
+  "title": "Design System: Cyber First Response",
+  "extensions": {
+    "colorMeta": {
+      "public-service-blue": { "role": "primary", "displayName": "Public-Service Blue", "canonical": "#0057b8", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-hover": { "role": "primary", "displayName": "Public-Service Blue Hover", "canonical": "#004a9f", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-deep": { "role": "primary", "displayName": "Public-Service Blue Deep", "canonical": "#003b73", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-deeper": { "role": "primary", "displayName": "Public-Service Blue Deeper", "canonical": "#002f5c", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-soft": { "role": "primary", "displayName": "Public-Service Blue Soft", "canonical": "#eaf3ff", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-subtle": { "role": "primary", "displayName": "Public-Service Blue Subtle", "canonical": "#dbeaff", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "public-service-blue-emphasis": { "role": "primary", "displayName": "Public-Service Blue Emphasis", "canonical": "#c7ddf5", "tonalRamp": ["#002f5c", "#003b73", "#004a9f", "#0057b8", "#6eb2ff", "#c7ddf5", "#dbeaff", "#eaf3ff"] },
+      "civic-navy-stage": { "role": "neutral", "displayName": "Civic Navy Stage", "canonical": "#082b55", "tonalRamp": ["#071a2f", "#082b55", "#173452", "#214566", "#2b5578", "#6f8eaa", "#b8c9d8", "#edf3f8"] },
+      "safety-orange": { "role": "secondary", "displayName": "Safety Orange", "canonical": "#e85d04", "tonalRamp": ["#4f1d00", "#7a2f00", "#ad4e00", "#e85d04", "#fa8c16", "#ffb27f", "#ffe7bf", "#fff7e8"] },
+      "safety-orange-text": { "role": "secondary", "displayName": "Safety Orange Text", "canonical": "#b64400", "tonalRamp": ["#4f1d00", "#7a2f00", "#ad4e00", "#b64400", "#e85d04", "#ff9b5c", "#ffe7bf", "#fff7e8"] },
+      "service-paper": { "role": "neutral", "displayName": "Service Paper", "canonical": "#ffffff", "tonalRamp": ["#171717", "#404040", "#525252", "#737373", "#d9d9d9", "#e5e5e5", "#f5f5f5", "#ffffff"] },
+      "page-neutral": { "role": "neutral", "displayName": "Page Neutral", "canonical": "#fafafa", "tonalRamp": ["#171717", "#404040", "#525252", "#737373", "#d9d9d9", "#e5e5e5", "#f5f5f5", "#fafafa"] },
+      "soft-neutral": { "role": "neutral", "displayName": "Soft Neutral", "canonical": "#f5f5f5", "tonalRamp": ["#171717", "#404040", "#525252", "#737373", "#d9d9d9", "#e5e5e5", "#f5f5f5", "#ffffff"] },
+      "neutral-hairline": { "role": "neutral", "displayName": "Neutral Hairline", "canonical": "#d9d9d9", "tonalRamp": ["#171717", "#404040", "#525252", "#737373", "#a3a3a3", "#d9d9d9", "#f5f5f5", "#ffffff"] },
+      "neutral-gridline": { "role": "neutral", "displayName": "Neutral Gridline", "canonical": "#737373", "tonalRamp": ["#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#d9d9d9", "#f5f5f5"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#171717", "tonalRamp": ["#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#d9d9d9", "#f5f5f5"] },
+      "muted-ink": { "role": "neutral", "displayName": "Muted Ink", "canonical": "#404040", "tonalRamp": ["#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#d9d9d9", "#f5f5f5"] },
+      "focus-neutral": { "role": "neutral", "displayName": "Focus Neutral", "canonical": "#525252", "tonalRamp": ["#171717", "#262626", "#404040", "#525252", "#737373", "#a3a3a3", "#d9d9d9", "#f5f5f5"] },
+      "status-error": { "role": "tertiary", "displayName": "Status Error", "canonical": "#8a1a16", "tonalRamp": ["#4a0b08", "#6b120e", "#8a1a16", "#b42318", "#dc4446", "#f58b91", "#ffecee", "#fff7f7"] },
+      "status-warning": { "role": "tertiary", "displayName": "Status Warning", "canonical": "#ad4e00", "tonalRamp": ["#4f1d00", "#7a2f00", "#ad4e00", "#e85d04", "#fa8c16", "#ffb27f", "#ffe7bf", "#fff7e8"] },
+      "status-info": { "role": "tertiary", "displayName": "Status Info", "canonical": "#006d75", "tonalRamp": ["#00383d", "#00545b", "#006d75", "#008f99", "#25b7b0", "#79d9d1", "#c9f7f2", "#effcfb"] },
+      "status-success": { "role": "tertiary", "displayName": "Status Success", "canonical": "#00522c", "tonalRamp": ["#002e19", "#004221", "#00522c", "#087a41", "#2aa65a", "#79cf8b", "#ddf8d8", "#f3fcf1"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial Display", "purpose": "The short homepage promise on the navy stage." },
+      "headline": { "displayName": "Editorial Headline", "purpose": "Large section statements with selective blue continuation text." },
+      "title": { "displayName": "Strong Title", "purpose": "Page and major task-section headings." },
+      "body": { "displayName": "Service Body", "purpose": "Plain-language instructions, explanations, and form content." },
+      "label": { "displayName": "Operational Label", "purpose": "Utilities, field labels, saved state, and compact interface metadata." }
+    },
+    "shadows": [
+      { "name": "level-1", "value": "0px 1px 2px 0px rgba(0,0,0,.04), 0px 1px 2px 0px rgba(0,0,0,.04)", "purpose": "Sticky masthead and the focused report surface." },
+      { "name": "level-2", "value": "0px 4px 8px 0px rgba(0,0,0,.08), 0px 1px 2px 0px rgba(0,0,0,.04)", "purpose": "Selective navy service island and fixed mobile service navigation." },
+      { "name": "level-3", "value": "0px 8px 16px 0px rgba(0,0,0,.16), 0px 4px 8px 0px rgba(0,0,0,.08)", "purpose": "Hero route interface and high-attention context alerts." },
+      { "name": "focus-ring", "value": "0 0 0 0.125rem #fafafa, 0 0 0 0.25rem #0057b8", "purpose": "Visible keyboard focus around UX4G controls in the light theme." }
+    ],
+    "motion": [
+      { "name": "control-state", "value": "150ms ease", "purpose": "UX4G button background, border, color, shadow, and outline state transitions." },
+      { "name": "control-press", "value": "80ms ease", "purpose": "Short press transform feedback on controls." },
+      { "name": "route-row", "value": "160ms ease-out", "purpose": "Incident-row hover wash and inset shift." },
+      { "name": "reduced-motion", "value": "scroll-behavior: auto", "purpose": "Removes smooth document scrolling when reduced motion is requested." }
+    ],
+    "breakpoints": [
+      { "name": "service-compact", "value": "64rem" },
+      { "name": "service-mobile", "value": "48rem" }
+    ],
+    "themes": {
+      "dark": {
+        "publicServiceBlue": "#6eb2ff",
+        "publicServiceBlueHover": "#8fc4ff",
+        "publicServiceBlueDeep": "#a8d1ff",
+        "publicServiceBlueDeeper": "#c2deff",
+        "publicServiceBlueSoft": "#173452",
+        "publicServiceBlueSubtle": "#214566",
+        "publicServiceBlueEmphasis": "#2b5578",
+        "safetyOrange": "#ff9b5c",
+        "safetyOrangeText": "#ffb27f",
+        "civicNavyStage": "#071a2f"
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The decisive action for reporting, continuing, checking, or opening a prepared report.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Continue <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 11h10.17l-4.59-4.59L12 5l7 7-7 7-1.42-1.41L15.17 13H5v-2z\"/></svg></button>",
+      "css": ".ds-btn-primary{min-height:2.5rem;display:inline-flex;align-items:center;justify-content:center;gap:.25rem;padding:0 1rem;border:1px solid transparent;border-radius:var(--ux4g-radius-md,8px);background:var(--ux4g-bg-primary-strong,#0057b8);color:var(--ux4g-text-neutral-inverse,#fafafa);font:500 1rem/1.25rem \"Noto Sans\",system-ui,sans-serif;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease,transform .08s ease}.ds-btn-primary svg{width:1.25rem;height:1.25rem;fill:currentColor}.ds-btn-primary:hover{background:var(--ux4g-bg-primary-strong-hover,#004a9f)}.ds-btn-primary:active{background:var(--ux4g-bg-primary-stronger,#003b73)}.ds-btn-primary:focus-visible{outline:0;box-shadow:0 0 0 .125rem var(--ux4g-bg-neutral,#fafafa),0 0 0 .25rem var(--ux4g-bg-primary-strong,#0057b8)}"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "A clear secondary action for alternate routes, back actions, and verified help paths.",
+      "html": "<button class=\"ds-btn-outline\" type=\"button\">Review other routes</button>",
+      "css": ".ds-btn-outline{min-height:2.5rem;display:inline-flex;align-items:center;justify-content:center;padding:0 1rem;border:1px solid var(--ux4g-border-color-primary-default,#0057b8);border-radius:var(--ux4g-radius-md,8px);background:var(--ux4g-bg-neutral-elevated,#fff);color:var(--ux4g-text-brand-primary-default,#004a99);font:500 1rem/1.25rem \"Noto Sans\",system-ui,sans-serif;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,box-shadow .15s ease}.ds-btn-outline:hover{background:var(--ux4g-bg-primary-soft,#eaf3ff);border-color:var(--ux4g-border-color-primary-hover,#004a9f)}.ds-btn-outline:focus-visible{outline:0;box-shadow:0 0 0 .125rem var(--ux4g-bg-neutral,#fafafa),0 0 0 .25rem var(--ux4g-bg-primary-strong,#0057b8)}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A labelled, full-width UX4G field for identifiers, contact details, and report facts.",
+      "html": "<label class=\"ds-field\"><span>Complaint number</span><input type=\"text\" placeholder=\"For example, CFR-2026-001\"><small>Use the reference shown on your acknowledgement.</small></label>",
+      "css": ".ds-field{display:grid;gap:.5rem;color:var(--ux4g-text-neutral-primary,#171717);font-family:\"Noto Sans\",system-ui,sans-serif}.ds-field>span{font-size:.875rem;line-height:1.125rem;font-weight:700}.ds-field input{width:100%;height:3rem;padding:.75rem;border:1px solid var(--ux4g-border-color-neutral-subtle,#e5e5e5);border-radius:var(--ux4g-radius-md,8px);background:var(--ux4g-bg-neutral-elevated,#fff);color:var(--ux4g-text-neutral-primary,#171717);font:400 1rem/1.5rem inherit}.ds-field input:focus-visible{outline:2px solid var(--ux4g-border-color-neutral-focus,#525252);outline-offset:.125rem}.ds-field small{color:var(--ux4g-text-neutral-secondary,#404040);font-size:.75rem;line-height:1rem}"
+    },
+    {
+      "name": "Incident Route Row",
+      "kind": "custom",
+      "description": "The signature open route for selecting an incident in plain language without a card-grid feel.",
+      "html": "<a class=\"ds-incident-row\" href=\"#\"><span class=\"ds-incident-icon\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2a7 7 0 0 0-7 7v4l-2 3v1h18v-1l-2-3V9a7 7 0 0 0-7-7Zm0 20a3 3 0 0 0 2.82-2h-5.64A3 3 0 0 0 12 22Z\"/></svg></span><strong>I lost money</strong><span class=\"ds-incident-copy\">Transfers, payments, withdrawals, cards, wallets or investments.</span><svg class=\"ds-incident-arrow\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 11h10.17l-4.59-4.59L12 5l7 7-7 7-1.42-1.41L15.17 13H5v-2z\"/></svg></a>",
+      "css": ".ds-incident-row{min-height:6rem;display:grid;grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;align-items:start;gap:.5rem .75rem;padding:1.5rem 0;border-top:1px solid var(--ux4g-border-color-neutral-default,#d9d9d9);background:transparent;color:var(--ux4g-text-neutral-primary,#171717);font-family:\"Noto Sans\",system-ui,sans-serif;text-decoration:none;transition:background-color 160ms ease-out,padding 160ms ease-out}.ds-incident-row:hover{padding-inline:1rem;background:var(--ux4g-bg-primary-soft,#eaf3ff)}.ds-incident-row:focus-visible{outline:3px solid var(--ux4g-border-color-neutral-focus,#525252);outline-offset:-1px}.ds-incident-icon{grid-row:1/3;width:2.25rem;height:2.25rem;display:grid;place-items:center;border-radius:999px;background:var(--ux4g-bg-warning-soft,#ffe7bf);color:var(--ux4g-text-brand-secondary-default,#b64400)}.ds-incident-icon svg,.ds-incident-arrow{width:1.25rem;height:1.25rem;fill:currentColor}.ds-incident-row strong{padding-right:1.5rem;font-size:1.125rem;line-height:1.5rem}.ds-incident-copy{grid-column:2/4;color:var(--ux4g-text-neutral-secondary,#404040);font-size:.875rem;line-height:1.25rem}.ds-incident-arrow{grid-column:3;grid-row:1;color:var(--ux4g-text-brand-primary-default,#004a99)}"
+    },
+    {
+      "name": "Editorial Service Panel",
+      "kind": "card",
+      "refersTo": "editorial-panel",
+      "description": "A selective tonal island for guidance or supporting action, not a default wrapper for every section.",
+      "html": "<section class=\"ds-editorial-panel\"><h3>Clear details support the next action</h3><p>Organised information helps you review the incident and identify what to do next.</p><a href=\"#\">See how tracking works</a></section>",
+      "css": ".ds-editorial-panel{padding:1.75rem;border:0;border-radius:32px;background:linear-gradient(135deg,var(--ux4g-bg-primary-soft,#eaf3ff),var(--ux4g-bg-primary-subtle,#dbeaff));color:var(--ux4g-text-neutral-primary,#171717);font-family:\"Noto Sans\",system-ui,sans-serif}.ds-editorial-panel h3{margin:0;font:700 1.25rem/1.75rem \"Noto Sans Display\",\"Noto Sans\",sans-serif}.ds-editorial-panel p{max-width:54ch;margin:.75rem 0;color:var(--ux4g-text-neutral-secondary,#404040);font-size:1rem;line-height:1.5rem}.ds-editorial-panel a{color:var(--ux4g-text-brand-primary-default,#004a99);font-weight:500;text-underline-offset:.125rem}.ds-editorial-panel a:hover{text-decoration-thickness:2px}.ds-editorial-panel a:focus-visible{outline:2px solid var(--ux4g-border-color-neutral-focus,#525252);outline-offset:.125rem}"
+    },
+    {
+      "name": "Urgent Action Alert",
+      "kind": "custom",
+      "description": "The first-action rail for immediate danger or financial loss, with urgency stated before the broader journey.",
+      "html": "<section class=\"ds-urgent-alert\" role=\"note\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2v-4h2v4Z\"/></svg><div><strong>Need urgent help?</strong><span>Act now before you continue reporting.</span></div><a href=\"tel:1930\">Call 1930 for money loss</a></section>",
+      "css": ".ds-urgent-alert{min-height:3rem;display:flex;align-items:center;gap:1rem;padding:.75rem 1.5rem;border-radius:12px;background:var(--ux4g-bg-error-soft,#ffecee);color:var(--ux4g-text-neutral-primary,#171717);font-family:\"Noto Sans\",system-ui,sans-serif}.ds-urgent-alert>svg{width:1.5rem;height:1.5rem;flex:0 0 auto;fill:var(--ux4g-text-status-error,#8a1a16)}.ds-urgent-alert div{display:flex;flex:1;flex-wrap:wrap;gap:.5rem}.ds-urgent-alert strong{font-weight:700}.ds-urgent-alert a{min-height:2.5rem;display:inline-flex;align-items:center;padding:0 1rem;border-radius:8px;background:var(--ux4g-bg-primary-strong,#0057b8);color:var(--ux4g-text-neutral-inverse,#fafafa);font-weight:500;text-decoration:none}.ds-urgent-alert a:hover{background:var(--ux4g-bg-primary-strong-hover,#004a9f)}.ds-urgent-alert a:focus-visible{outline:0;box-shadow:0 0 0 .125rem var(--ux4g-bg-neutral,#fafafa),0 0 0 .25rem var(--ux4g-bg-primary-strong,#0057b8)}"
+    },
+    {
+      "name": "Sticky Service Masthead",
+      "kind": "nav",
+      "description": "The white civic masthead with compact navigation and one prominent reporting action.",
+      "html": "<nav class=\"ds-masthead\" aria-label=\"Primary navigation\"><a class=\"ds-brand\" href=\"#\"><span>CFR</span><strong>Cyber First Response</strong></a><div><a href=\"#\">Track my complaint</a><a href=\"#\">Get help</a><a class=\"ds-nav-action\" href=\"#\">Report an incident</a></div></nav>",
+      "css": ".ds-masthead{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:1rem 1.5rem;background:var(--ux4g-bg-neutral-elevated,#fff);color:var(--ux4g-text-neutral-primary,#171717);box-shadow:0 1px 2px rgba(0,0,0,.04);font-family:\"Noto Sans\",system-ui,sans-serif}.ds-brand{display:flex;align-items:center;gap:.75rem;color:inherit;text-decoration:none;text-transform:uppercase}.ds-brand span{width:2.25rem;height:2.25rem;display:grid;place-items:center;border:2px solid var(--ux4g-border-color-primary-strong,#003b73);border-radius:999px;color:var(--ux4g-text-brand-primary-default,#004a99);font-size:.75rem;font-weight:700}.ds-brand strong{max-width:10rem;line-height:1.05}.ds-masthead>div{display:flex;align-items:center;gap:1rem}.ds-masthead>div>a{color:inherit;font-size:.875rem;font-weight:500;text-decoration:none}.ds-masthead>div>a:hover{text-decoration:underline;text-underline-offset:.125rem}.ds-masthead .ds-nav-action{min-height:2.5rem;display:inline-flex;align-items:center;padding:0 1rem;border-radius:8px;background:var(--ux4g-bg-primary-strong,#0057b8);color:var(--ux4g-text-neutral-inverse,#fafafa)}.ds-masthead a:focus-visible{outline:2px solid var(--ux4g-border-color-neutral-focus,#525252);outline-offset:.125rem}"
+    },
+    {
+      "name": "Mobile Service Navigation",
+      "kind": "nav",
+      "description": "The fixed narrow-screen service switcher that keeps five core destinations continuously available.",
+      "html": "<nav class=\"ds-mobile-nav\" aria-label=\"Mobile navigation\"><a href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 11 12 3l9 8v10h-6v-6H9v6H3V11Z\"/></svg><span>Home</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 3h12l4 4v14H4V3Zm3 5h6V6H7v2Zm0 4h10v-2H7v2Zm0 4h10v-2H7v2Z\"/></svg><span>Report</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 2a8 8 0 1 0 4.9 14.32L20.59 22 22 20.59l-5.68-5.69A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z\"/></svg><span>Track</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 4h18v16H3V4Zm2 2v12h14V6H5Zm2 2h5v2H7V8Zm0 4h10v2H7v-2Z\"/></svg><span>Check</span></a><a href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 2a10 10 0 0 0-10 10v5a3 3 0 0 0 3 3h3v-8H4a8 8 0 0 1 16 0h-4v8h2a2 2 0 0 1-2 2h-4v2h4a4 4 0 0 0 4-4 3 3 0 0 0 2-3v-5A10 10 0 0 0 12 2Z\"/></svg><span>Help</span></a></nav>",
+      "css": ".ds-mobile-nav{display:grid;grid-template-columns:repeat(5,1fr);padding:.5rem 0 max(.5rem,env(safe-area-inset-bottom));border-top:2px solid var(--ux4g-border-color-neutral-strong,#737373);background:var(--ux4g-bg-neutral-elevated,#fff);box-shadow:0 4px 8px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);font-family:\"Noto Sans\",system-ui,sans-serif}.ds-mobile-nav a{min-height:2.25rem;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.25rem;color:var(--ux4g-text-neutral-primary,#171717);font-size:.75rem;text-align:center;text-decoration:none}.ds-mobile-nav svg{width:1.25rem;height:1.25rem;fill:currentColor}.ds-mobile-nav a:hover{color:var(--ux4g-text-brand-primary-default,#004a99)}.ds-mobile-nav a:focus-visible{outline:2px solid var(--ux4g-border-color-neutral-focus,#525252);outline-offset:.125rem}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Modern Civic Guidance Desk",
+    "overview": "Cyber First Response feels like a calm public-service guide translated into a polished digital service. The user-pinned five-reference set governs the visual world: oversized editorial hierarchy, deep navy stages, luminous public-service blue, open divided rows, asymmetric white space, and a small number of rounded interface islands. Civic-service seed 55b83fb9 corroborates the official, action-oriented character, but the references supersede its earlier counter-grid composition.\n\nHierarchy and sequence do more work than repeated cards. Urgent help appears first; a large promise follows; plain-language incident routes remain open and scannable; deeper tasks move into focused UX4G forms and status panels. The mood is authoritative, humane, and decisive—never financial-product glossy, alarmist, or decorative.\n\nTruthfulness is part of the interface character. Local saves and prepared reports must be visually and verbally distinct from official submission, police acknowledgement, institutional tracking, or guaranteed recovery. Accessibility is equally structural: visible focus, semantic landmarks, keyboard operation, minimum practical target sizes, responsive reflow, and reduced-motion behavior are non-negotiable.",
+    "keyCharacteristics": [
+      "Deep navy gradient stages surrounded by crisp service paper.",
+      "Oversized, tightly tracked editorial headings with short line lengths.",
+      "Open incident routes separated by hairlines instead of boxed card repetition.",
+      "Asymmetric 12-column desktop compositions that collapse predictably.",
+      "Selective pale-blue and neutral panels, with restrained elevation.",
+      "Orange and red reserved for urgency, warning, or exceptional emphasis.",
+      "UX4G 2.0.1 remains the authority for tokens, controls, and interaction states.",
+      "A curved route motif connects citizen, action, and verified next step."
+    ],
+    "rules": [
+      { "name": "The Urgency Is Scarce Rule", "body": "Orange and red identify genuinely urgent or exceptional states; they never become broad decorative palette colors.", "section": "colors" },
+      { "name": "The Navy Stage Rule", "body": "Deep navy appears as a deliberate stage or interface island, not as a background on every section.", "section": "colors" },
+      { "name": "The Semantic Ownership Rule", "body": "Application colors map to UX4G semantic variables once; components consume those semantic roles rather than introducing new one-off values.", "section": "colors" },
+      { "name": "The Hierarchy Before Containers Rule", "body": "Use scale, weight, line length, and white space to establish sections before adding a panel or border.", "section": "typography" },
+      { "name": "The Short Promise Rule", "body": "Display headlines remain short, left aligned, and deliberately broken; dense instructions belong in body copy.", "section": "typography" },
+      { "name": "The Open Row Rule", "body": "A list of routes is divided, not tiled: use one hairline and one hover wash per row instead of four enclosing borders.", "section": "layout" },
+      { "name": "The Mobile Continuity Rule", "body": "Home, Report, Track, Check, and Help remain reachable from the fixed bottom navigation on narrow screens.", "section": "layout" },
+      { "name": "The Flat-By-Default Rule", "body": "Do not shadow ordinary content modules or open route rows; elevation marks sticky, focused, floating, or high-attention interface layers.", "section": "elevation" },
+      { "name": "The Island Contrast Rule", "body": "Large radii belong to a few intentional interface islands; do not round every section into a card.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do start urgent journeys with the immediate action rail before the broader service promise.",
+      "Do use oversized, short, left-aligned editorial headings and let asymmetric white space carry hierarchy.",
+      "Do keep route choices open, divided, and easy to scan; preserve the icon-title-description-arrow sequence.",
+      "Do use UX4G semantic tokens and component states, including visible keyboard focus and reduced-motion support.",
+      "Do distinguish a report saved on this device from an official submission or institutional acknowledgement in both copy and status styling.",
+      "Do preserve responsive task continuity with stacked forms, full-width mobile actions, and fixed bottom navigation."
+    ],
+    "donts": [
+      "Don't turn every module into a bordered, elevated, or rounded faux card.",
+      "Don't use orange or red as ambient decoration, broad backgrounds, or competing calls to action.",
+      "Don't make the service resemble a fintech landing page, a generic feature-card gallery, or an alarm-heavy emergency screen.",
+      "Don't invent verified statistics, response-time guarantees, recovery promises, agency endorsements, or official-submission states.",
+      "Don't introduce new colors, type families, radii, or shadow levels outside the mapped UX4G system without updating this contract.",
+      "Don't hide safety, privacy, or local-only reporting distinctions behind hover, disclosure, or decorative language."
+    ]
+  }
+}

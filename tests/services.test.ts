@@ -5,7 +5,6 @@ import {
   interpretIncident,
   interpretIncidentDeterministically,
   isIncidentInterpretation,
-  lookupComplaint,
 } from '../lib/services';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -43,12 +42,7 @@ describe('deterministic incident interpretation', () => {
   });
 });
 
-describe('synthetic prototype services', () => {
-  it('finds only the documented demo complaint', () => {
-    expect(lookupComplaint(' cfr-2026-001 ')?.acknowledgement).toBe('CFR-2026-001');
-    expect(lookupComplaint('real-case-123')).toBeNull();
-  });
-
+describe('guided service utilities', () => {
   it('returns every checker state', () => {
     expect(checkIdentifier('upi', 'fraud@upi').state).toBe('reported');
     expect(checkIdentifier('phone', '+91 81111 22222').state).toBe('no-match');

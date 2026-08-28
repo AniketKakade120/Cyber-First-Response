@@ -1,4 +1,3 @@
-import { demoComplaint, DEMO_ACKNOWLEDGEMENT } from './demo-data';
 import type { Escalation, IncidentInterpretation } from './types';
 
 export function isIncidentInterpretation(value: unknown): value is IncidentInterpretation {
@@ -49,10 +48,6 @@ export async function interpretIncident(narrative: string): Promise<{ mode: 'AI-
   } catch {
     return { mode: 'Guided assistance', data: interpretIncidentDeterministically(narrative) };
   }
-}
-
-export function lookupComplaint(value: string) {
-  return value.trim().toUpperCase() === DEMO_ACKNOWLEDGEMENT ? demoComplaint : null;
 }
 
 export function checkIdentifier(type: string, value: string) {
