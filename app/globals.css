@@ -783,19 +783,22 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
 .service-hero .ux4g-btn-outline-primary { border-color: var(--ux4g-text-neutral-inverse); background: transparent; color: var(--ux4g-text-neutral-inverse); }
 .service-hero .ux4g-btn-outline-primary:hover { background: var(--ux4g-bg-neutral-elevated); color: var(--ux4g-text-brand-primary-default); }
 .hero-illustration-container {
-  position: relative;
-  z-index: 2;
-  inline-size: min(100%, 38rem);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  justify-self: end;
+  position: absolute;
+  z-index: 1;
+  inset-block: 0;
+  inset-inline-end: 0;
+  inline-size: 58%;
+  pointer-events: none;
 }
 .hero-illustration-img {
-  inline-size: 100%;
+  position: absolute;
+  inset-inline-end: -6%;
+  inset-block-end: -3.5%;
+  inline-size: 116%;
   block-size: auto;
-  max-inline-size: 100%;
+  max-inline-size: none;
   object-fit: contain;
+  object-position: right bottom;
   display: block;
 }
 
@@ -856,6 +859,17 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
   .trust-band, .safety-band { grid-template-columns: 1fr; }
   .report-shell { grid-template-columns: 1fr; }
   .hero-layout { grid-template-columns: 1fr; }
+  .hero-illustration-container {
+    position: relative;
+    inset: auto;
+    inline-size: 100%;
+    min-block-size: 24rem;
+  }
+  .hero-illustration-img {
+    inset-inline-end: -5%;
+    inset-block-end: -3.5%;
+    inline-size: 110%;
+  }
   .service-mosaic, .public-service-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .service-mosaic-heading, .guidance-heading, .service-module-track, .service-module:nth-of-type(2), .service-module-anonymous, .public-service-grid .guidance-module:nth-of-type(1), .public-service-grid .guidance-module:nth-of-type(2), .public-service-grid .guidance-module-impact { grid-column: auto; grid-row: auto; }
   .service-mosaic-heading, .guidance-heading, .service-module-track, .public-service-grid .guidance-module-impact { grid-column: 1 / -1; }
@@ -877,8 +891,10 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
   .hero-actions .ux4g-btn { inline-size: 100%; }
   .hero-illustration-container {
     inline-size: 100%;
+    min-block-size: 18rem;
     justify-self: stretch;
   }
+  .hero-illustration-img { inline-size: 114%; }
   .hero-visual { padding: var(--ux4g-padding-m); border-radius: var(--ux4g-radius-xl); }
   .route-motif { min-block-size: var(--ux4g-section-m); margin-block-end: var(--ux4g-section-xs); }
   .route-node-end { inset-block-end: 0; }
