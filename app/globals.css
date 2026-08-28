@@ -786,17 +786,24 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
 .hero-illustration-container {
   position: relative;
   z-index: 2;
+  inline-size: min(100%, 38rem);
+  min-block-size: 30rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+  justify-self: end;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2rem 4.5rem rgba(0, 0, 0, 0.22);
   overflow: hidden;
 }
 .hero-illustration-img {
-  width: 100%;
-  height: auto;
-  max-height: 25rem;
-  object-fit: contain;
+  inline-size: 132%;
+  block-size: 132%;
+  max-inline-size: none;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -877,6 +884,16 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
   .hero-content > * + * { margin-block-start: var(--ux4g-gap-row-m); }
   .hero-actions { display: grid; }
   .hero-actions .ux4g-btn { inline-size: 100%; }
+  .hero-illustration-container {
+    inline-size: 100%;
+    min-block-size: 18rem;
+    justify-self: stretch;
+    border-radius: var(--ux4g-radius-xl);
+  }
+  .hero-illustration-img {
+    inline-size: 125%;
+    block-size: 125%;
+  }
   .hero-visual { padding: var(--ux4g-padding-m); border-radius: var(--ux4g-radius-xl); }
   .route-motif { min-block-size: var(--ux4g-section-m); margin-block-end: var(--ux4g-section-xs); }
   .route-node-end { inset-block-end: 0; }
