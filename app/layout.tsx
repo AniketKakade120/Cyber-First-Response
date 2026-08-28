@@ -4,8 +4,9 @@ import 'ux4g-web-components/design-system';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Cyber First Response',
-  description: 'Citizen-first guidance for cybercrime safety, reporting, complaint tracking and recovery in India.',
+  title: 'Cyber First Response — Act quickly. Report clearly. Know what happens next.',
+  description: 'Citizen-first guidance for cybercrime safety, reporting, complaint tracking and recovery in India. Report financial fraud, harassment, identity theft and more.',
+  icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

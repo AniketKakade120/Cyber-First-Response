@@ -3,13 +3,13 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 
 import { useEffect, useState } from 'react';
+import { CfrLogo } from './cfr-logo';
 
 const links = [
-  ['/report', 'Report an incident'],
-  ['/track', 'Track my complaint'],
-  ['/check', 'Check something suspicious'],
-  ['/help', 'Get help'],
-  ['/learn', 'Learn and stay safe'],
+  ['/report', 'Report'],
+  ['/track', 'Track'],
+  ['/learn', 'Learn'],
+  ['/help', 'Help'],
 ] as const;
 
 export function ServiceHeader() {
@@ -19,6 +19,17 @@ export function ServiceHeader() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // Inject Noto Sans from Google Fonts once
+  useEffect(() => {
+    if (document.getElementById('cfr-google-fonts')) return;
+    const link = document.createElement('link');
+    link.id = 'cfr-google-fonts';
+    link.rel = 'stylesheet';
+    link.href =
+      'https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap';
+    document.head.appendChild(link);
+  }, []);
 
   const resizeText = (direction: number) => {
     const current = Number.parseFloat(document.documentElement.style.fontSize || '100');
@@ -54,14 +65,14 @@ export function ServiceHeader() {
       <nav className="ux4g-navbar" aria-label="Primary navigation">
         <div className="ux4g-container">
           <div className="ux4g-navbar-wrap">
-            <a className="site-brand ux4g-d-flex ux4g-ai-center ux4g-gap-x-s" href="/">
-              <span className="brand-mark ux4g-d-flex ux4g-jc-center ux4g-ai-center" aria-hidden="true"><span className="ux4g-icon-outlined">hub</span></span>
-              <span className="brand-wordmark ux4g-d-flex ux4g-flex-column"><span>Cyber</span><span>First Response</span></span>
+            <a className="site-brand" href="/" aria-label="Cyber First Response – home">
+              <CfrLogo />
             </a>
             <div className="ux4g-navbar-desktop">
               <div className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-l">
                 <ul className="ux4g-navbar-links">{links.map(([href, label]) => <li key={href}><a className="ux4g-text-link-sm" href={href}>{label}</a></li>)}</ul>
-                <a className="ux4g-btn ux4g-btn-primary ux4g-btn-md" href="/report">Report an incident</a>
+                <a className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-md" href="/check">Check suspicious</a>
+                <a className="ux4g-btn ux4g-btn-primary ux4g-btn-md" href="/report" style={{ background: 'var(--cfr-orange)', borderColor: 'var(--cfr-orange)' }}>Start a report →</a>
               </div>
             </div>
             <div className="ux4g-navbar-mobile">
