@@ -792,8 +792,8 @@ input, textarea, select { caret-color: var(--ux4g-text-brand-primary-default); }
 }
 .hero-illustration-img {
   position: absolute;
-  inset-inline-end: -3%;
-  inset-block-end: -4%;
+  inset-inline-end: -5%;
+  inset-block-end: -7%;
   inline-size: auto;
   block-size: 108%;
   max-inline-size: none;
