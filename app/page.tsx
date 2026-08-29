@@ -3,25 +3,12 @@ import { UsefulActionsSection } from '../components/useful-actions-section';
 import { HomeRouter } from '../components/home-router';
 import { ServiceLayout } from '../components/service-layout';
 import { TrustAccordion } from '../components/trust-accordion';
-import { scamCards } from '../lib/demo-data';
-
-const processSteps = [
-  ['Tell us what happened', 'Share the details in your own words.'],
-  ['Review and correct', 'Check the organised information before it is used.'],
-  ['Review next actions', 'See the recommended reporting route and practical next steps.'],
-  ['Stay informed', 'Use your acknowledgement number to track progress.'],
-] as const;
-
-const evidenceItems = [
-  ['calendar_month', 'Approximate date and time'],
-  ['receipt_long', 'Transaction or reference details'],
-  ['chat', 'Messages, emails or screenshots'],
-  ['link', 'Phone numbers, usernames or links'],
-] as const;
+import { SavedDraftBanner } from '../components/saved-draft-banner';
 
 export default function Home() {
   return (
     <ServiceLayout>
+      {/* Priority Actions Banner */}
       <section className="priority-section" aria-label="Urgent actions">
         <div className="ux4g-container">
           <div className="priority-alert ux4g-alert ux4g-alert-error ux4g-alert-wide" role="note">
@@ -60,9 +47,9 @@ export default function Home() {
               <a
                 className="ux4g-btn ux4g-btn-primary ux4g-btn-lg"
                 href="/report"
-                style={{ background: 'var(--cfr-orange)', borderColor: 'var(--cfr-orange)' }}
+                style={{ background: '#FFFFFF', borderColor: '#FFFFFF', color: 'var(--cfr-navy)', fontWeight: 700 }}
               >
-                Start a report →
+                Start a report
               </a>
               <a className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-lg" href="/track">
                 Track existing report
@@ -79,17 +66,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Start with the situation, not the category (Triage Section matching Reference Image) */}
-      <section id="triage" className="ux4g-container page-section triage-section" aria-labelledby="triage-title">
-        <div className="section-heading editorial-heading">
+      {/* Situation-based Triage Section */}
+      <section id="triage" className="ux4g-container page-section triage-section" aria-labelledby="triage-title" style={{ marginBlockStart: '1.5rem' }}>
+        <div className="section-heading editorial-heading" style={{ marginBlockEnd: '2rem' }}>
           <h2 id="triage-title" className="triage-heading-title">
-            Let us know what happened.<br /><span>We'll help you take the right step.</span>
+            Let us know what happened.<br />
+            <span>We'll help you take the right step.</span>
           </h2>
-          <p className="triage-heading-sub">Pick what's closest, you can change it as you go.</p>
+          <p className="triage-heading-sub" style={{ marginBlockStart: '0.65rem', fontSize: '1.05rem', color: '#64748B' }}>
+            Choose the situation that feels closest. You can review and change the reporting route later.
+          </p>
         </div>
 
-        {/* 2 Featured Priority Cards */}
-        <div className="featured-triage-grid">
+        {/* 3 Top Visually Prioritised Situation Cards */}
+        <div className="featured-triage-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {/* Card 1: Money Loss */}
           <a href="/report/financial-fraud" className="featured-card featured-card-orange">
             <div className="featured-card-top">
@@ -104,7 +94,7 @@ export default function Home() {
               <div className="featured-card-bottom">
                 <div className="featured-card-tag tag-orange">
                   <span className="ux4g-icon-outlined" aria-hidden="true">schedule</span>
-                  <span>Time matters — report quickly</span>
+                  <span>Time matters — act quickly</span>
                 </div>
                 <span className="ux4g-icon-outlined tag-orange" aria-hidden="true">arrow_forward</span>
               </div>
@@ -115,7 +105,7 @@ export default function Home() {
           <a href="/report/sensitive-harm" className="featured-card featured-card-blue">
             <div className="featured-card-top">
               <div className="featured-card-icon-wrap icon-wrap-blue">
-                <span className="ux4g-icon-outlined" aria-hidden="true">shield_person</span>
+                <span className="ux4g-icon-outlined" aria-hidden="true">security</span>
               </div>
               <div className="featured-card-body">
                 <h3>I am being threatened or harassed</h3>
@@ -133,12 +123,37 @@ export default function Home() {
               </div>
             </div>
           </a>
+
+          {/* Card 3: Child Safety */}
+          <a href="/report/sensitive-harm" className="featured-card featured-card-red">
+            <div className="featured-card-top">
+              <div className="featured-card-icon-wrap icon-wrap-red">
+                <span className="ux4g-icon-outlined" aria-hidden="true">child_care</span>
+              </div>
+              <div className="featured-card-body">
+                <h3>A child may be at risk</h3>
+                <p>Immediate safety and evidence guidance for an incident involving a child.</p>
+              </div>
+            </div>
+            <div>
+              <div className="featured-card-divider" />
+              <div className="featured-card-bottom">
+                <div className="featured-card-tag tag-red">
+                  <span className="ux4g-icon-outlined" aria-hidden="true">shield</span>
+                  <span>See child-safety steps</span>
+                </div>
+                <span className="ux4g-icon-outlined tag-red" aria-hidden="true">arrow_forward</span>
+              </div>
+            </div>
+          </a>
         </div>
 
         {/* Other Situations Sub-heading */}
-        <h3 className="other-situations-title">Other situations</h3>
+        <h3 className="other-situations-title" style={{ marginBlockStart: '2.5rem', marginBlockEnd: '1rem', fontSize: '1.2rem', fontWeight: 700, color: 'var(--cfr-navy)' }}>
+          More situations
+        </h3>
 
-        {/* 3-Column x 2-Row Grid for Other Situations */}
+        {/* 3-Column Grid for Other Situations */}
         <div className="other-situations-grid">
           <a href="/report/identity" className="situation-card">
             <div className="situation-card-icon">
@@ -158,17 +173,6 @@ export default function Home() {
             <div className="situation-card-content">
               <strong>My account was compromised</strong>
               <span>Hacked email, social media, banking or another online account.</span>
-            </div>
-            <span className="ux4g-icon-outlined situation-card-arrow" aria-hidden="true">arrow_forward</span>
-          </a>
-
-          <a href="/report/sensitive-harm" className="situation-card">
-            <div className="situation-card-icon">
-              <span className="ux4g-icon-outlined" aria-hidden="true">person</span>
-            </div>
-            <div className="situation-card-content">
-              <strong>A child may be at risk</strong>
-              <span>Immediate safety and evidence guidance for an incident involving a child.</span>
             </div>
             <span className="ux4g-icon-outlined situation-card-arrow" aria-hidden="true">arrow_forward</span>
           </a>
@@ -205,53 +209,64 @@ export default function Home() {
             </div>
             <span className="ux4g-icon-outlined situation-card-arrow" aria-hidden="true">arrow_forward</span>
           </a>
+
+          <a href="/report" className="situation-card">
+            <div className="situation-card-icon">
+              <span className="ux4g-icon-outlined" aria-hidden="true">group</span>
+            </div>
+            <div className="situation-card-content">
+              <strong>I am reporting for someone else</strong>
+              <span>Assist a family member, friend or elderly relative to prepare details.</span>
+            </div>
+            <span className="ux4g-icon-outlined situation-card-arrow" aria-hidden="true">arrow_forward</span>
+          </a>
         </div>
 
-        {/* Describe in your own words */}
-        <div id="describe">
+        {/* 7. Describe in your own words */}
+        <div id="describe" style={{ marginBlockStart: '1.25rem' }}>
           <HomeRouter />
         </div>
       </section>
 
-      {/* Useful Actions Section (Redesigned matching reference images) */}
+      {/* 8. Immediate tools for people not ready to report */}
       <UsefulActionsSection />
 
-      {/* Reporting Guidance (Redesigned matching reference image) */}
+      {/* 9. What happens before and after reporting */}
       <ReportingGuidanceSection />
 
-      {/* Trust Band */}
-      <section className="ux4g-container trust-band" aria-labelledby="trust-title">
-        <div className="trust-band-intro">
-          <span className="trust-shield ux4g-icon-outlined" aria-hidden="true">shield</span>
-          <div>
-            <h2 id="trust-title">Trust and transparency</h2>
-            <p>Understand how information is handled and what choices you have.</p>
-          </div>
-        </div>
+      {/* 10. Priority FAQs */}
+      <section className="ux4g-container page-section" style={{ marginBlock: '4rem 3.5rem' }}>
         <TrustAccordion />
       </section>
 
-      {/* Safety Band */}
-      <section className="ux4g-container safety-band" aria-labelledby="scams-title">
-        <div className="safety-band-intro">
-          <span className="trust-shield ux4g-icon-outlined" aria-hidden="true">policy</span>
-          <div>
-            <h2 id="scams-title">Stay safe. Spot common patterns early.</h2>
-            <p>Recognise suspicious pressure, payment and impersonation tactics.</p>
+      {/* Scam Warning Callout Section */}
+      <section className="ux4g-container page-section" style={{ marginBlockStart: '2.5rem' }}>
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #17345B 0%, #245EAB 100%)',
+            borderRadius: '16px',
+            padding: '2.5rem 2.25rem',
+            color: '#FFFFFF',
+            boxShadow: '0 10px 25px -5px rgba(23, 52, 91, 0.25)',
+          }}
+        >
+          <div style={{ maxInlineSize: '48rem' }}>
+            <h2 id="scam-awareness-title" style={{ fontSize: '1.75rem', fontWeight: 800, marginBlockEnd: '0.85rem', lineHeight: 1.25, color: '#FFFFFF' }}>
+              Stay safe. Spot pressure before you act.
+            </h2>
+            <p style={{ fontSize: '1rem', color: '#BFDBFE', lineHeight: 1.6, margin: '0 0 1.5rem 0' }}>
+              Scammers often create urgency, promise guaranteed returns, impersonate authorities or ask for secrecy, remote access, advance fees or OTPs.
+            </p>
+            <div>
+              <a
+                href="/learn"
+                className="ux4g-btn ux4g-btn-primary"
+                style={{ background: '#E87A3A', borderColor: '#E87A3A', padding: '0.75rem 1.75rem', fontSize: '0.95rem', fontWeight: 700, borderRadius: '8px', textDecoration: 'none', display: 'inline-block' }}
+              >
+                Explore scam warning signs
+              </a>
+            </div>
           </div>
-        </div>
-        <div className="safety-cards">
-          {scamCards.map(([title, description]) => (
-            <article key={title}>
-              <span className="ux4g-icon-outlined" aria-hidden="true">verified_user</span>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </article>
-          ))}
-          <a className="safety-all-link" href="/learn">
-            Explore all safety guidance
-            <span className="ux4g-icon-outlined" aria-hidden="true">arrow_forward</span>
-          </a>
         </div>
       </section>
     </ServiceLayout>

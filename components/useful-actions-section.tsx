@@ -1,9 +1,8 @@
-'use me';
 'use client';
 
 import { useState } from 'react';
 
-type TabType = 'phone' | 'bank' | 'link';
+type TabType = 'phone' | 'bank' | 'link' | 'social';
 
 export function UsefulActionsSection() {
   const [activeTab, setActiveTab] = useState<TabType>('phone');
@@ -18,12 +17,12 @@ export function UsefulActionsSection() {
   };
 
   return (
-    <section className="ux4g-container page-section useful-actions-section" aria-label="Useful things you can do right now">
+    <section className="ux4g-container page-section useful-actions-section" aria-label="Not ready to report? You can still take action.">
       {/* Section Heading */}
       <div className="section-heading editorial-heading useful-actions-heading">
-        <h2 className="useful-actions-title">Useful things you can do right now</h2>
+        <h2 className="useful-actions-title">Not ready to report? You can still take action.</h2>
         <p className="useful-actions-sub">
-          Check suspicious details, understand your privacy options or learn what happens after you report.
+          Check suspicious details or understand your privacy options.
         </p>
       </div>
 
@@ -40,7 +39,7 @@ export function UsefulActionsSection() {
               </svg>
             </div>
             <div>
-              <h3 className="check-trust-title">Check before you trust</h3>
+              <h3 className="check-trust-title">Check something suspicious</h3>
               <p className="check-trust-subtitle">Review suspicious identifiers before you act.</p>
             </div>
           </div>
@@ -71,6 +70,14 @@ export function UsefulActionsSection() {
               <span className="ux4g-icon-outlined" aria-hidden="true">link</span>
               <span>Link or website</span>
             </button>
+            <button
+              type="button"
+              className={`check-tab ${activeTab === 'social' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('social'); setHasChecked(false); }}
+            >
+              <span className="ux4g-icon-outlined" aria-hidden="true">share</span>
+              <span>Social media</span>
+            </button>
           </div>
 
           {/* Form Input Area */}
@@ -79,6 +86,7 @@ export function UsefulActionsSection() {
               {activeTab === 'phone' && 'Phone number'}
               {activeTab === 'bank' && 'Bank account or UPI ID'}
               {activeTab === 'link' && 'Website URL or Link'}
+              {activeTab === 'social' && 'Social media profile or handle'}
             </label>
             <div className="check-input-row">
               <input
@@ -90,7 +98,9 @@ export function UsefulActionsSection() {
                     ? 'Enter a 10-digit mobile number'
                     : activeTab === 'bank'
                     ? 'Enter UPI ID (e.g. name@upi) or account number'
-                    : 'Enter website link (e.g. https://suspicious.site)'
+                    : activeTab === 'link'
+                    ? 'Enter website link (e.g. https://suspicious.site)'
+                    : 'Enter handle or profile URL (e.g. @username)'
                 }
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
@@ -98,76 +108,67 @@ export function UsefulActionsSection() {
             </div>
 
             <button type="submit" className="check-submit-btn">
-              Check now →
+              Open suspicious-item checker →
             </button>
           </form>
 
+          {/* Mandatory Pre-Interaction Disclaimer */}
+          <div style={{ marginBlockStart: '0.85rem', padding: '0.75rem 0.85rem', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '0.8rem', color: '#475569', lineHeight: 1.45 }}>
+            <strong style={{ color: '#0F172A', display: 'block', marginBlockEnd: '0.2rem' }}>Safety Disclaimer:</strong>
+            A result is only a signal. <strong>No match does not mean it is safe.</strong> Never send money or share an OTP because of this result.
+          </div>
+
           {hasChecked && (
-            <div className="check-result-box">
+            <div className="check-result-box" style={{ marginBlockStart: '0.85rem' }}>
               <span className="ux4g-icon-outlined text-blue" aria-hidden="true">info</span>
               <div>
-                <strong>Initial Safety Assessment</strong>
+                <strong>Sample Data Search Result</strong>
                 <p>
-                  No active high-risk flags reported for "{inputValue}". Always verify bank credentials and avoid sharing OTPs or pin numbers.
+                  No sample flag matched "{inputValue}". <strong>Remember: No match does not mean it is safe.</strong>
                 </p>
               </div>
             </div>
           )}
-
-          {/* Bottom Alert Banner */}
-          <div className="check-alert-banner">
-            <span className="ux4g-icon-outlined alert-shield-icon" aria-hidden="true">security</span>
-            <div>
-              <strong className="alert-banner-title">Check first. Act second.</strong>
-              <p className="alert-banner-sub">We'll show available safety information and suggested next steps.</p>
-            </div>
-          </div>
         </div>
 
-        {/* RIGHT COLUMN: Unified Guidance Hub Card (Single Cohesive Component) */}
+        {/* RIGHT COLUMN: Understand reporting and privacy */}
         <div className="useful-card guidance-hub-card">
-          {/* Card Main Header */}
           <div className="guidance-hub-main-header">
             <div>
-              <h3 className="guidance-hub-main-title">Reporting & Privacy Guidance</h3>
-              <p className="guidance-hub-main-sub">Essential information before you start your report.</p>
+              <h3 className="guidance-hub-main-title">Understand reporting and privacy</h3>
+              <p className="guidance-hub-main-sub">Essential guidance on privacy options and follow-up steps.</p>
             </div>
           </div>
 
-          {/* SECTION 1: Privacy & Anonymous Options */}
-          <div className="guidance-section-block privacy-block">
-            <div className="guidance-block-header">
-              <span className="ux4g-icon-outlined block-icon-blue" aria-hidden="true">shield</span>
-              <div>
-                <h4 className="guidance-block-title">Can I report anonymously?</h4>
-                <p className="guidance-block-sub">Understand what stays private and when follow-up details are required.</p>
-              </div>
-            </div>
-
+          <div className="guidance-section-block privacy-block" style={{ marginBlockStart: '0.4rem' }}>
             <div className="privacy-questions-list">
-              <a href="/report/anonymous" className="privacy-q-item">
-                <span className="q-icon ux4g-icon-outlined">help_outline</span>
-                <span className="q-text">What information must I share?</span>
-                <span className="q-arrow ux4g-icon-outlined">chevron_right</span>
+              <a href="/about#privacy" className="privacy-q-item">
+                <span className="q-icon ux4g-icon-outlined" aria-hidden="true">help_outline</span>
+                <span className="q-text">Can I report anonymously?</span>
+                <span className="q-arrow ux4g-icon-outlined" aria-hidden="true">chevron_right</span>
               </a>
-              <a href="/report/anonymous" className="privacy-q-item">
-                <span className="q-icon ux4g-icon-outlined">help_outline</span>
-                <span className="q-text">Will someone contact me?</span>
-                <span className="q-arrow ux4g-icon-outlined">chevron_right</span>
+              <a href="/about#privacy" className="privacy-q-item">
+                <span className="q-icon ux4g-icon-outlined" aria-hidden="true">help_outline</span>
+                <span className="q-text">What information must I share?</span>
+                <span className="q-arrow ux4g-icon-outlined" aria-hidden="true">chevron_right</span>
+              </a>
+              <a href="/about#privacy" className="privacy-q-item">
+                <span className="q-icon ux4g-icon-outlined" aria-hidden="true">help_outline</span>
+                <span className="q-text">Who may contact me after I report?</span>
+                <span className="q-arrow ux4g-icon-outlined" aria-hidden="true">chevron_right</span>
+              </a>
+              <a href="/about#privacy" className="privacy-q-item">
+                <span className="q-icon ux4g-icon-outlined" aria-hidden="true">help_outline</span>
+                <span className="q-text">How is my personal data protected?</span>
+                <span className="q-arrow ux4g-icon-outlined" aria-hidden="true">chevron_right</span>
               </a>
             </div>
 
-            <a href="/report/anonymous" className="guidance-inline-link">
+            <a href="/about#privacy" className="guidance-inline-link" style={{ marginBlockStart: '1rem', display: 'inline-flex', fontWeight: 700 }}>
               Read privacy guidance →
             </a>
           </div>
         </div>
-      </div>
-
-      {/* Bottom Notice Bar across full width */}
-      <div className="useful-bottom-bar">
-        <span className="ux4g-icon-outlined bottom-lock-icon" aria-hidden="true">lock</span>
-        <span>You can explore these tools without starting a report.</span>
       </div>
     </section>
   );

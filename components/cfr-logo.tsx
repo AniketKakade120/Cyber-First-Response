@@ -4,7 +4,7 @@ interface CfrLogoProps {
   size?: number;
 }
 
-export function CfrLogo({ inverted = false, showWordmark = true, size = 52 }: CfrLogoProps) {
+export function CfrLogo({ inverted = false, showWordmark = true, size = 72 }: CfrLogoProps) {
   const logoSrc = inverted || showWordmark ? '/white-logo.png' : '/logo-main.png';
 
   return (
@@ -15,7 +15,9 @@ export function CfrLogo({ inverted = false, showWordmark = true, size = 52 }: Cf
       style={{
         display: 'block',
         height: `${size}px`,
+        maxHeight: `${size}px`,
         width: 'auto',
+        objectFit: 'contain',
       }}
     />
   );

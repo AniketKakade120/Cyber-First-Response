@@ -5,39 +5,256 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { DRAFT_STORAGE_KEY, emptyDraft } from '../lib/demo-data';
 import { interpretIncident } from '../lib/services';
-import type { IncidentDraft } from '../lib/types';
+import type { EvidenceAttachment, IncidentDraft, ReporterRelation, SourceState, TransactionItem } from '../lib/types';
 
-const steps = ['Act now', 'What happened', 'Transaction', 'Suspect', 'Evidence', 'Your details', 'Review'];
-const actionItems = ['Call 1930', 'Contact the bank or payment provider', 'Block affected cards or payment access', 'Do not make another payment', 'Do not share an OTP, PIN or password', 'Preserve messages and transaction records'];
-const actionChoices = ['I have done this', 'Help me do this', 'Not applicable'];
+const stageNames = [
+  'Act now',
+  'Tell us',
+  'Review details',
+  'Evidence',
+  'About you',
+  'Review',
+] as const;
+
 const paymentMethods = ['UPI', 'Bank transfer', 'Card', 'Wallet', 'Cash deposit', 'Cryptocurrency', 'Other'];
-const contactChannels = ['Phone call', 'WhatsApp', 'Telegram', 'Email', 'Social media', 'Website or app', 'Other'];
+const contactChannelOptions = ['Phone call', 'SMS', 'WhatsApp', 'Telegram', 'Social media', 'Email', 'Website or app', 'In person', 'I do not know'];
 
-function Field({ label, hint, optional, children }: { label: string; hint?: string; optional?: boolean; children: React.ReactNode }) {
+function SourceBadge({ state }: { state?: SourceState }) {
+  if (state === 'description') {
+    return <span style={{ color: '#2563EB', fontSize: '0.75rem', fontWeight: 600 }}>✦ Auto-filled</span>;
+  }
+  return null;
+}
+
+function Field({ label, hint, optional, sourceState, children }: { label: string; hint?: string; optional?: boolean; sourceState?: SourceState; children: React.ReactNode }) {
   return (
-    <div className="form-field">
-      <div className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-xs">
-        <span className="ux4g-label-l-strong">
+    <div className="form-field" style={{ marginBlockEnd: '1.15rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBlockEnd: '0.35rem' }}>
+        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           {label}
-          {!optional && <span className="mandatory-asterisk" style={{ color: '#DC2626', marginLeft: '3px', fontWeight: 'bold' }}>*</span>}
-        </span>
-        {optional && <span className="ux4g-tag-tonal-neutral ux4g-tag-s">Optional</span>}
+          {optional && <span style={{ color: '#94A3B8', fontWeight: 400, fontSize: '0.775rem' }}>(optional)</span>}
+          {!optional && <span style={{ color: '#DC2626' }}>*</span>}
+        </label>
+        {sourceState && <SourceBadge state={sourceState} />}
       </div>
-      {hint && <p className="field-hint ux4g-body-s-default">{hint}</p>}
+      {hint && <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 0.35rem 0', lineHeight: 1.3 }}>{hint}</p>}
       {children}
     </div>
   );
 }
 
-export function ReportFlow() {
+function ActNowContent({
+  immediateActions,
+  onUpdateAction,
+  onContinue,
+}: {
+  immediateActions: Record<string, 'done' | 'help' | 'later'>;
+  onUpdateAction: (key: string, val: 'done' | 'help' | 'later') => void;
+  onContinue: () => void;
+}) {
+  const [helpState, setHelpState] = useState<Record<string, boolean>>({});
+  const toggleHelp = (key: string) => setHelpState((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  return (
+    <div>
+      <div style={{ marginBlockEnd: '1.25rem' }}>
+        <span style={{ background: '#FFF7ED', color: '#C2410C', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '12px', border: '1px solid #FFEDD5' }}>Immediate First Response</span>
+        <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0.35rem 0 0.25rem 0' }}>First, let’s reduce further loss</h1>
+        <p style={{ fontSize: '0.9rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+          These actions may help protect your money and accounts. You can continue preparing your report even if you cannot complete every action now.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBlockEnd: '1.5rem' }}>
+        {/* Action 1: Call 1930 */}
+        <div style={{ border: '1.5px solid #FDBA74', background: '#FFF7ED', borderRadius: '12px', padding: '1.15rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem', marginBlockEnd: '0.75rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: '#9A3412', margin: '0 0 0.25rem 0' }}>1. Call 1930 Immediately</h3>
+              <p style={{ fontSize: '0.85rem', color: '#C2410C', margin: 0 }}>Report to the financial cyber fraud helpline to request a bank hold on transferred funds.</p>
+            </div>
+            <a href="tel:1930" className="ux4g-btn" style={{ background: '#E87A3A', color: '#FFFFFF', fontWeight: 700, padding: '0.45rem 1.15rem', fontSize: '0.875rem', textDecoration: 'none', borderRadius: '6px' }}>
+              Call 1930 Now
+            </a>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('c1930', 'done')}
+              style={{ background: immediateActions.c1930 === 'done' ? '#166534' : '#FFFFFF', color: immediateActions.c1930 === 'done' ? '#FFFFFF' : '#0F172A', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {immediateActions.c1930 === 'done' ? '✓ Done' : 'Done'}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleHelp('c1930')}
+              style={{ background: helpState.c1930 ? '#EFF6FF' : '#FFFFFF', color: helpState.c1930 ? '#1E40AF' : '#1D4ED8', border: helpState.c1930 ? '1.5px solid #2563EB' : '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Help me do this {helpState.c1930 ? '▲' : '▼'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('c1930', 'later')}
+              style={{ background: '#FFFFFF', color: '#475569', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
+            >
+              Do this later
+            </button>
+          </div>
+
+          {helpState.c1930 && (
+            <div style={{ marginBlockStart: '0.85rem', background: '#FFFFFF', border: '1px solid #FED7AA', borderRadius: '8px', padding: '0.85rem', fontSize: '0.825rem', color: '#475569' }}>
+              <strong style={{ color: '#9A3412', display: 'block', marginBlockEnd: '0.35rem' }}>Guidance for Calling 1930:</strong>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <li>Keep your banking app open or SMS receipt ready with the Transaction UTR number.</li>
+                <li>Note down the exact date, time, and recipient UPI ID or account number.</li>
+                <li>Inform the 1930 agent that you transferred funds under deception and request an immediate hold on the beneficiary account.</li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Action 2: Contact Bank */}
+        <div style={{ border: '1px solid #E2E8F0', background: '#F8FAFC', borderRadius: '12px', padding: '1.15rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>2. Contact your bank or payment provider</h3>
+          <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem 0' }}>Ask whether the payment can be stopped, recalled, or marked as fraudulent.</p>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('bank', 'done')}
+              style={{ background: immediateActions.bank === 'done' ? '#166534' : '#FFFFFF', color: immediateActions.bank === 'done' ? '#FFFFFF' : '#0F172A', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {immediateActions.bank === 'done' ? '✓ Done' : 'Done'}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleHelp('bank')}
+              style={{ background: helpState.bank ? '#EFF6FF' : '#FFFFFF', color: helpState.bank ? '#1E40AF' : '#1D4ED8', border: helpState.bank ? '1.5px solid #2563EB' : '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Help me do this {helpState.bank ? '▲' : '▼'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('bank', 'later')}
+              style={{ background: '#FFFFFF', color: '#475569', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
+            >
+              Do this later
+            </button>
+          </div>
+
+          {helpState.bank && (
+            <div style={{ marginBlockStart: '0.85rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.85rem', fontSize: '0.825rem', color: '#475569' }}>
+              <strong style={{ color: '#0F172A', display: 'block', marginBlockEnd: '0.35rem' }}>Guidance for Bank Fraud Reporting:</strong>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <li>Call your bank's 24x7 toll-free customer care number (found on the back of your debit card).</li>
+                <li>Ask to connect directly with the <strong>Cyber Fraud / Dispute Cell</strong>.</li>
+                <li>Request an immediate payment recall and request a temporary block on netbanking if your credentials were compromised.</li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {/* Action 3: Block cards/UPI */}
+        <div style={{ border: '1px solid #E2E8F0', background: '#F8FAFC', borderRadius: '12px', padding: '1.15rem' }}>
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>3. Block affected cards or payment access</h3>
+          <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem 0' }}>Secure compromised debit/credit cards, UPI PINs, or mobile banking apps.</p>
+          
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('cards', 'done')}
+              style={{ background: immediateActions.cards === 'done' ? '#166534' : '#FFFFFF', color: immediateActions.cards === 'done' ? '#FFFFFF' : '#0F172A', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              {immediateActions.cards === 'done' ? '✓ Done' : 'Done'}
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleHelp('cards')}
+              style={{ background: helpState.cards ? '#EFF6FF' : '#FFFFFF', color: helpState.cards ? '#1E40AF' : '#1D4ED8', border: helpState.cards ? '1.5px solid #2563EB' : '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Help me do this {helpState.cards ? '▲' : '▼'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onUpdateAction('cards', 'later')}
+              style={{ background: '#FFFFFF', color: '#475569', border: '1px solid #CBD5E1', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
+            >
+              Do this later
+            </button>
+          </div>
+
+          {helpState.cards && (
+            <div style={{ marginBlockStart: '0.85rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.85rem', fontSize: '0.825rem', color: '#475569' }}>
+              <strong style={{ color: '#0F172A', display: 'block', marginBlockEnd: '0.35rem' }}>Guidance for Securing Payment Access:</strong>
+              <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <li>Open your mobile banking app → Card Services → <strong>Temporary Lock / Freeze</strong>.</li>
+                <li>If you shared your UPI PIN or clicked a suspicious link, reset your UPI PIN and Netbanking password immediately.</li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Why this comes first box */}
+      <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.85rem 1rem', fontSize: '0.825rem', color: '#1E40AF', marginBlockEnd: '1.5rem' }}>
+        <strong>Why this comes first:</strong> Fast action within the golden hour may reduce further financial loss. You can prepare the formal complaint report immediately afterwards.
+      </div>
+
+      {/* Primary Action Button */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <button
+          type="button"
+          onClick={onContinue}
+          style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '0.85rem', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+        >
+          I have already taken these steps
+        </button>
+
+        <button
+          type="button"
+          onClick={onContinue}
+          className="ux4g-btn ux4g-btn-primary"
+          style={{ padding: '0.6rem 2rem', fontSize: '0.95rem', fontWeight: 700 }}
+        >
+          Continue to describe what happened →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
   const [draft, setDraft] = useState<IncidentDraft>(emptyDraft);
   const [ready, setReady] = useState(false);
   const [lastSavedAt, setLastSavedAt] = useState('');
-  const [mode, setMode] = useState<'AI-assisted' | 'Guided assistance'>('Guided assistance');
   const [busy, setBusy] = useState(false);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [showActNowDrawer, setShowActNowDrawer] = useState(false);
+  const [promptExpanded, setPromptExpanded] = useState(false);
+  const [sampleLoadedNotice, setSampleLoadedNotice] = useState(false);
+
+  // Captcha & Mobile OTP Verification State
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+  const [captchaCode, setCaptchaCode] = useState('8K2P9Q');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const refreshCaptcha = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaCode(code);
+    setCaptchaInput('');
+    setCaptchaError('');
+  };
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Restore draft or initial narrative
   useEffect(() => {
     const restoreTimer = window.setTimeout(async () => {
       const initialNarrative = localStorage.getItem('cfr-initial-narrative');
@@ -48,20 +265,21 @@ export function ReportFlow() {
         try {
           baseDraft = { ...emptyDraft, ...JSON.parse(stored) };
           setLastSavedAt(baseDraft.savedAt || '');
-        } catch { localStorage.removeItem(DRAFT_STORAGE_KEY); }
+        } catch {
+          localStorage.removeItem(DRAFT_STORAGE_KEY);
+        }
       }
 
       if (initialNarrative && initialNarrative.trim()) {
         localStorage.removeItem('cfr-initial-narrative');
         const text = initialNarrative.trim();
-        baseDraft = { ...baseDraft, narrative: text, step: 2 };
+        baseDraft = { ...baseDraft, narrative: text, step: 1 };
         setDraft(baseDraft);
         setReady(true);
 
         setBusy(true);
         const result = await interpretIncident(text);
         const extracted = result.data as any;
-        setMode(result.mode);
         setDraft((current) => ({
           ...current,
           interpretation: result.data,
@@ -73,6 +291,18 @@ export function ReportFlow() {
           date: current.date || (extracted.extractedDate ?? ''),
           time: current.time || (extracted.extractedTime ?? ''),
           contactChannel: current.contactChannel || (result.data.platform ?? ''),
+          suspectOrgClaimed: current.suspectOrgClaimed || (extracted.extractedClaimedOrg ?? ''),
+          sourceMap: {
+            amount: result.data.amount ? 'description' : 'missing',
+            paymentMethod: result.data.paymentMethod ? 'description' : 'missing',
+            provider: extracted.extractedProvider ? 'description' : 'missing',
+            transactionId: extracted.extractedTxId ? 'description' : 'missing',
+            recipient: extracted.extractedRecipient ? 'description' : 'missing',
+            date: extracted.extractedDate ? 'description' : 'missing',
+            time: extracted.extractedTime ? 'description' : 'missing',
+            contactChannel: result.data.platform ? 'description' : 'missing',
+            suspectOrgClaimed: extracted.extractedClaimedOrg ? 'description' : 'missing',
+          },
           step: 2,
         }));
         setBusy(false);
@@ -84,6 +314,7 @@ export function ReportFlow() {
     return () => window.clearTimeout(restoreTimer);
   }, []);
 
+  // Autosave draft to local storage
   useEffect(() => {
     if (!ready) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -95,485 +326,1271 @@ export function ReportFlow() {
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [draft, ready]);
 
-  const savedLabel = useMemo(() => lastSavedAt ? `Saved locally at ${new Date(lastSavedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Saving locally…', [lastSavedAt]);
   const update = <K extends keyof IncidentDraft>(key: K, value: IncidentDraft[K]) => setDraft((current) => ({ ...current, [key]: value }));
 
-  const organise = async () => {
-    if (!draft.narrative.trim()) { setErrors(['Describe what happened before asking for help to organise it.']); return; }
-    setBusy(true); setErrors([]);
-    const result = await interpretIncident(draft.narrative.slice(0, 5000));
+  const currentStage = draft.step; // 1 to 5
+
+  const handleOrganiseNarrative = async () => {
+    if (!draft.narrative.trim()) return;
+    setBusy(true);
+    const result = await interpretIncident(draft.narrative);
     const extracted = result.data as any;
-    setMode(result.mode);
+    
+    // Construct single transaction if extracted
+    const firstTx: TransactionItem = {
+      id: 'tx-1',
+      amount: result.data.amount?.toString() || draft.amount,
+      currency: 'INR',
+      date: extracted.extractedDate || draft.date,
+      time: extracted.extractedTime || draft.time,
+      paymentMethod: result.data.paymentMethod || draft.paymentMethod || 'UPI',
+      provider: extracted.extractedProvider || draft.provider || '',
+      transactionId: extracted.extractedTxId || draft.transactionId || '',
+      recipient: extracted.extractedRecipient || draft.recipient || '',
+      status: 'completed',
+    };
+
     setDraft((current) => ({
       ...current,
       interpretation: result.data,
-      amount: current.amount || (result.data.amount?.toString() ?? ''),
-      paymentMethod: current.paymentMethod || (result.data.paymentMethod ?? ''),
-      provider: current.provider || (extracted.extractedProvider ?? ''),
-      transactionId: current.transactionId || (extracted.extractedTxId ?? ''),
-      recipient: current.recipient || (extracted.extractedRecipient ?? ''),
-      date: current.date || (extracted.extractedDate ?? ''),
-      time: current.time || (extracted.extractedTime ?? ''),
-      contactChannel: current.contactChannel || (result.data.platform ?? ''),
+      amount: firstTx.amount,
+      paymentMethod: firstTx.paymentMethod,
+      provider: firstTx.provider,
+      transactionId: firstTx.transactionId,
+      recipient: firstTx.recipient,
+      date: firstTx.date,
+      time: firstTx.time,
+      contactChannel: current.contactChannel || result.data.platform || 'Phone call',
+      suspectOrgClaimed: current.suspectOrgClaimed || extracted.extractedClaimedOrg || '',
+      transactions: current.transactions.length ? current.transactions : [firstTx],
+      sourceMap: {
+        amount: result.data.amount ? 'description' : 'missing',
+        paymentMethod: result.data.paymentMethod ? 'description' : 'missing',
+        provider: extracted.extractedProvider ? 'description' : 'missing',
+        transactionId: extracted.extractedTxId ? 'description' : 'missing',
+        recipient: extracted.extractedRecipient ? 'description' : 'missing',
+        date: extracted.extractedDate ? 'description' : 'missing',
+        time: extracted.extractedTime ? 'description' : 'missing',
+        contactChannel: result.data.platform ? 'description' : 'missing',
+      },
       step: 2,
     }));
     setBusy(false);
   };
 
-  const goNext = () => {
-    const nextErrors: string[] = [];
-    if (draft.step === 1 && !draft.narrative.trim()) nextErrors.push('Describe what happened.');
-    if (draft.step === 2) { if (!draft.amount) nextErrors.push('Enter the amount lost or choose I don’t know.'); if (!draft.paymentMethod) nextErrors.push('Choose a payment method.'); if (draft.interpretation && !draft.interpretationConfirmed) nextErrors.push('Review and confirm the interpretation suggestions, then correct the fields below.'); }
-    if (draft.step === 5) { if (!draft.fullName.trim()) nextErrors.push('Enter your full name.'); if (!draft.mobile.trim()) nextErrors.push('Enter your mobile number.'); }
-    if (draft.step === 6) { if (!draft.reviewed) nextErrors.push('Confirm that you reviewed and corrected the information.'); if (!draft.prototypeConsent) nextErrors.push('Confirm that you consent to save this report on this device.'); }
-    setErrors(nextErrors);
-    if (!nextErrors.length) update('step', Math.min(6, draft.step + 1));
+  const handleAddSampleStory = () => {
+    const sample = 'On 27 August 2026 at approximately 3:15 PM, I received a phone call from a person claiming to be from my bank’s fraud department. The caller said my account would be blocked unless I completed an urgent verification payment. I was asked to transfer ₹48,500 to the UPI ID testmerchant@upi. After making the payment, the caller stopped responding, and I realised it was a scam. The transaction reference number shown in my banking app is TEST20260827001.';
+    update('narrative', sample);
+    setSampleLoadedNotice(true);
   };
 
-  const addEvidence = (files: FileList | null) => {
-    if (!files) return;
-    const additions = Array.from(files).map((file, index) => ({ id: `${Date.now()}-${index}`, name: file.name, type: file.type || 'Unknown', size: file.size, state: 'uploading' as const }));
-    update('evidence', [...draft.evidence, ...additions]);
-    window.setTimeout(() => setDraft((current) => ({ ...current, evidence: current.evidence.map((item) => additions.some((added) => added.id === item.id) ? { ...item, state: 'attached' } : item) })), 700);
+  const handleAddEvidenceFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+    const newAtt: EvidenceAttachment = {
+      id: `ev-${Date.now()}`,
+      name: file.name,
+      type: file.type || 'document',
+      size: file.size,
+      state: 'ready',
+    };
+    update('evidence', [...draft.evidence, newAtt]);
   };
 
-  const clearDraft = () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    setDraft(emptyDraft);
-    setErrors([]);
+  const handleRemoveEvidence = (id: string) => {
+    update('evidence', draft.evidence.filter((item) => item.id !== id));
   };
 
-  const submit = () => {
-    const nextErrors = [!draft.reviewed && 'Confirm that you reviewed the information.', !draft.prototypeConsent && 'Confirm that you consent to save this report on this device.'].filter(Boolean) as string[];
-    if (nextErrors.length) { setErrors(nextErrors); return; }
-    localStorage.setItem('cfr-local-acknowledgement', JSON.stringify({ id: 'LOCAL-REPORT', at: new Date().toISOString(), summary: draft.narrative, amount: draft.amount, paymentMethod: draft.paymentMethod }));
-    window.location.href = '/complaint/local';
+  const handleCreateComplaintPack = () => {
+    const ackId = `CFR-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const localAck = {
+      id: ackId,
+      at: new Date().toISOString(),
+      summary: draft.narrative,
+      amount: draft.amount || '48500',
+      paymentMethod: draft.paymentMethod || 'UPI',
+      status: 'Submitted & Registered',
+      fullName: draft.fullName,
+      mobile: draft.mobile,
+    };
+    localStorage.setItem('cfr-local-acknowledgement', JSON.stringify(localAck));
+    update('step', 6);
   };
-
-  if (!ready) return <div className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-s" role="status"><span className="ux4g-spinner ux4g-spinner-md" aria-hidden="true" /><span>Restoring local draft…</span></div>;
 
   return (
-    <div className="report-workspace">
-      <div className="report-toolbar">
-        <p className="ux4g-label-m-strong" aria-live="polite"><span className="ux4g-icon-outlined" aria-hidden="true">check_circle</span>{savedLabel}</p>
-        <div><a className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-md" href="tel:1930"><span className="ux4g-icon-outlined" aria-hidden="true">call</span> Call 1930</a><a className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-md" href="/"><span className="ux4g-icon-outlined" aria-hidden="true">bookmark</span> Save and continue later</a><button className="ux4g-btn ux4g-btn-text-danger ux4g-btn-sm" onClick={clearDraft} type="button">Clear draft</button></div>
-      </div>
-      <nav className="custom-report-progress" aria-label="Report progress">
-        <ol className="custom-stepper-list">
-          {steps.map((label, index) => {
-            const isCompleted = index < draft.step;
-            const isCurrent = index === draft.step;
-            const isPending = index > draft.step;
+    <div className="report-flow-container" style={{ maxInlineSize: '980px', marginInline: 'auto' }}>
+      
+      {/* Top Stepper Navigation */}
+      <div style={{ marginBlockEnd: '2rem' }}>
+        {/* Desktop 6-stage Stepper */}
+        <div className="ux4g-d-none ux4g-d-md-block">
+          <ol style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}>
+            {stageNames.map((name, stepNum) => {
+              const isDone = currentStage > stepNum;
+              const isCurrent = currentStage === stepNum;
+              return (
+                <li
+                  key={name}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', cursor: (isDone || stepNum <= currentStage) ? 'pointer' : 'default' }}
+                  onClick={() => { if (isDone || stepNum <= currentStage) update('step', stepNum); }}
+                >
+                  <span
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      background: isDone ? '#1E40AF' : isCurrent ? '#FFFFFF' : '#F1F5F9',
+                      color: isDone ? '#FFFFFF' : isCurrent ? '#1E40AF' : '#64748B',
+                      border: isCurrent ? '2.5px solid #1E40AF' : isDone ? 'none' : '1px solid #CBD5E1',
+                    }}
+                  >
+                    {isDone ? '✓' : stepNum}
+                  </span>
+                  <span style={{ fontSize: '0.825rem', fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#0F172A' : '#64748B' }}>
+                    {name}
+                  </span>
+                  {stepNum < stageNames.length - 1 && (
+                    <span style={{ height: '2px', width: '24px', background: isDone ? '#1E40AF' : '#E2E8F0', marginInline: '0.35rem' }} />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
 
-            return (
-              <li
-                key={label}
-                className={`custom-step-item ${isCompleted ? 'is-completed' : ''} ${isCurrent ? 'is-current' : ''} ${isPending ? 'is-pending' : ''}`}
-                aria-current={isCurrent ? 'step' : undefined}
+        {/* Mobile Stepper */}
+        <div className="ux4g-d-block ux4g-d-md-none" style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', marginBlockEnd: '0.35rem' }}>
+            <span>Step {currentStage} of 5 — {stageNames[currentStage]}</span>
+            {currentStage > 0 && (
+              <button
+                type="button"
+                onClick={() => update('step', 0)}
+                style={{ background: 'none', border: 'none', color: '#E87A3A', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
               >
-                {/* Connecting Line */}
-                {index > 0 && <div className="step-connector" />}
-
-                <div className="step-content">
-                  {/* Circular Number Badge */}
-                  <div className="step-badge">
-                    {isCompleted ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    ) : (
-                      index + 1
-                    )}
-                  </div>
-
-                  {/* Step Title Label */}
-                  <span className="step-label">{label}</span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      </nav>
-      <div className={`report-shell ${draft.step > 0 ? 'has-no-sidebar' : ''}`}>
-        <section className="report-step" aria-labelledby="active-step-title">
-        <div className="mobile-progress"><span className="ux4g-label-m-strong">Step {draft.step + 1} of {steps.length}</span><span aria-live="polite">{savedLabel}</span></div>
-        {/* Toastr Error Notification */}
-        {errors.length > 0 && (
-          <div className="toastr-error-container" role="alert">
-            <div className="toastr-error-card">
-              <div className="toastr-icon-badge">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.2">
-                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-              </div>
-              <div className="toastr-content">
-                <strong className="toastr-title">Please check the following:</strong>
-                <ul className="toastr-list">
-                  {errors.map((error) => <li key={error}>{error}</li>)}
-                </ul>
-              </div>
-              <button className="toastr-close-btn" onClick={() => setErrors([])} type="button" aria-label="Close error toast">
-                &times;
-              </button>
-            </div>
-          </div>
-        )}
-
-        {draft.step === 0 && (
-          <div>
-            <h2 id="active-step-title" className="ux4g-heading-l-strong">First, let’s reduce further loss</h2>
-            <p className="ux4g-body-m-default">You can continue even if every action is not complete.</p>
-
-            <div className="action-checklist">
-              {actionItems.map((item) => (
-                <div className="action-question-card" key={item}>
-                  <h3 className="action-question-title">{item}</h3>
-                  <div className="action-radio-group">
-                    {actionChoices.map((choice) => {
-                      const isChecked = draft.immediateActions[item] === choice;
-                      return (
-                        <label key={choice} className={`action-radio-option ${isChecked ? 'is-active' : ''}`}>
-                          <input
-                            type="radio"
-                            name={item}
-                            className="action-radio-native"
-                            checked={isChecked}
-                            onChange={() => update('immediateActions', { ...draft.immediateActions, [item]: choice })}
-                          />
-                          <span className="action-radio-circle">
-                            {isChecked && <span className="action-radio-dot" />}
-                          </span>
-                          <span className="action-radio-text">{choice}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {draft.step === 1 && <div><h2 id="active-step-title" className="ux4g-heading-l-strong">Describe what happened in your own words</h2><p className="ux4g-body-m-default">Include the details you remember. Normal punctuation, URLs, handles and hashtags are allowed.</p><Field label="What happened?" hint="Example: I received an investment message on WhatsApp and transferred ₹25,000 using UPI."><div className="ux4g-textarea ux4g-textarea-default ux4g-textarea-md"><textarea className="ux4g-textarea-input" value={draft.narrative} onChange={(event) => update('narrative', event.target.value)} rows={8} aria-label="Incident description" /></div></Field><button className="ux4g-btn ux4g-btn-primary ux4g-btn-md" disabled={busy} onClick={organise} type="button">{busy ? 'Organising…' : 'Help organise my report'}</button></div>}
-
-        {draft.step === 2 && <div><h2 id="active-step-title" className="ux4g-heading-l-strong">Transaction details</h2>{draft.interpretation && <div className="ai-card ux4g-card ux4g-card-solid ux4g-card-vertical"><div className="ux4g-card-body"><div><h3 className="ux4g-card-title">Here is what we understood</h3><dl className="review-list"><div><dt>Suggested category</dt><dd>{draft.interpretation.suggestedCategory || 'Missing'}</dd></div><div><dt>Amount</dt><dd>{draft.interpretation.amount ? `₹${draft.interpretation.amount.toLocaleString('en-IN')}` : 'Missing'}</dd></div><div><dt>Payment method</dt><dd>{draft.interpretation.paymentMethod || 'Missing'}</dd></div><div><dt>Platform</dt><dd>{draft.interpretation.platform || 'Missing'}</dd></div></dl><label className="ux4g-checkbox ux4g-checkbox-md"><input className="ux4g-checkbox-input" type="checkbox" checked={draft.interpretationConfirmed} onChange={(event) => update('interpretationConfirmed', event.target.checked)} /><span className="ux4g-checkbox-control" aria-hidden="true"><span className="ux4g-checkmark" /></span><span className="ux4g-checkbox-label">I reviewed these suggestions. I will correct them below.</span></label></div></div></div>}
-          <div className="form-grid"><Field label="Amount lost" hint="Enter the amount shown in your transaction records"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" inputMode="numeric" value={draft.amount} onChange={(event) => update('amount', event.target.value.replace(/[^0-9]/g, ''))} placeholder="25000" /></div></Field><Field label="Currency"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value="INR" readOnly /></div></Field><Field label="Date" optional><input className="native-field" type="date" value={draft.date} onChange={(event) => update('date', event.target.value)} /></Field><Field label="Approximate time" optional><input className="native-field" type="time" value={draft.time} onChange={(event) => update('time', event.target.value)} /></Field><Field label="Payment method"><select className="native-field" value={draft.paymentMethod} onChange={(event) => update('paymentMethod', event.target.value)}><option value="">Choose one</option>{paymentMethods.map((method) => <option key={method}>{method}</option>)}</select></Field><Field label="Bank or payment provider" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.provider} onChange={(event) => update('provider', event.target.value)} placeholder="Bank or payment provider" /></div></Field><Field label="Transaction/reference ID" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.transactionId} onChange={(event) => update('transactionId', event.target.value)} placeholder="Transaction reference" /></div></Field><Field label="Recipient UPI/account/wallet" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.recipient} onChange={(event) => update('recipient', event.target.value)} placeholder="fraud@upi" /></div></Field></div></div>}
-
-        {draft.step === 3 && <div><h2 id="active-step-title" className="ux4g-heading-l-strong">Suspect and contact channel</h2><p className="ux4g-body-m-default">All fields may be left unknown. Do not investigate or contact the person yourself.</p><div className="form-grid"><Field label="How did they contact you?"><select className="native-field" value={draft.contactChannel} onChange={(event) => update('contactChannel', event.target.value)}><option value="">I don’t know</option>{contactChannels.map((channel) => <option key={channel}>{channel}</option>)}</select></Field><Field label="Display name used" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.suspectDisplayName} onChange={(event) => update('suspectDisplayName', event.target.value)} /></div></Field><Field label="Phone number" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" inputMode="tel" value={draft.suspectPhone} onChange={(event) => update('suspectPhone', event.target.value)} placeholder="+91 99990 00000" /></div></Field><Field label="WhatsApp, Telegram or social handle" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.suspectHandle} onChange={(event) => update('suspectHandle', event.target.value)} placeholder="@account-name" /></div></Field><Field label="Website or app" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.suspectWebsite} onChange={(event) => update('suspectWebsite', event.target.value)} placeholder="https://fake-invest.example" /></div></Field></div></div>}
-
-        {draft.step === 4 && (
-          <div>
-            <div className="form-strip-alert form-strip-warning" role="note">
-              <div className="form-strip-icon warning-icon-badge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                  <line x1="12" y1="9" x2="12" y2="13" />
-                  <line x1="12" y1="17" x2="12.01" y2="17" />
-                </svg>
-              </div>
-              <div>
-                <strong style={{ display: 'inline', fontWeight: 700 }}>Protect sensitive information &bull; </strong>
-                <span>Do not upload passwords, PINs, CVVs, OTPs or unrelated identity documents.</span>
-              </div>
-            </div>
-            <h2 id="active-step-title" className="ux4g-heading-l-strong">Add evidence</h2>
-            <label className="file-drop">
-              <span className="ux4g-icon-outlined" aria-hidden="true">upload_file</span>
-              <strong>Choose screenshots or PDFs</strong>
-              <span>PNG, JPG or PDF files</span>
-              <input type="file" multiple accept="image/png,image/jpeg,application/pdf" onChange={(event) => addEvidence(event.target.files)} />
-            </label>
-            <div className="evidence-list" aria-live="polite">
-              {draft.evidence.map((item) => (
-                <div className="evidence-item" key={item.id}>
-                  <span className="ux4g-icon-outlined" aria-hidden="true">description</span>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span>{Math.max(1, Math.round(item.size / 1024))} KB · {item.state === 'uploading' ? 'Uploading…' : 'Attached to complaint'}</span>
-                  </div>
-                  <button className="ux4g-btn ux4g-btn-text-danger ux4g-btn-sm" onClick={() => update('evidence', draft.evidence.filter((entry) => entry.id !== item.id))} type="button">Remove</button>
-                </div>
-              ))}
-            </div>
-            {!draft.evidence.length && <p className="ux4g-body-s-default">You can continue without evidence and add it later.</p>}
-          </div>
-        )}
-
-        {draft.step === 5 && (
-          <div>
-            <div className="form-strip-alert form-strip-info" role="note">
-              <div className="form-strip-icon info-icon-badge">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <div>
-                <strong style={{ display: 'inline', fontWeight: 700 }}>Privacy protection &bull; </strong>
-                <span>Never enter Aadhaar, PAN, passwords, PINs, CVVs, full card numbers or real OTPs.</span>
-              </div>
-            </div>
-            <h2 id="active-step-title" className="ux4g-heading-l-strong">Your contact details</h2>
-            <div className="form-grid">
-              <Field label="Full name"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.fullName} onChange={(event) => update('fullName', event.target.value)} placeholder="Meena Sharma" /></div></Field>
-              <Field label="Mobile number"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" inputMode="tel" value={draft.mobile} onChange={(event) => update('mobile', event.target.value)} placeholder="9999000000" /></div></Field>
-              <Field label="Preferred language"><select className="native-field" value={draft.language} onChange={(event) => update('language', event.target.value)}><option>English</option><option>Hindi</option></select></Field>
-              <Field label="State or Union Territory"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.state} onChange={(event) => update('state', event.target.value)} placeholder="Karnataka" /></div></Field>
-              <Field label="District or city"><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" value={draft.city} onChange={(event) => update('city', event.target.value)} placeholder="Bengaluru" /></div></Field>
-              <Field label="Email" optional><div className="ux4g-input ux4g-input-default ux4g-input-md"><input className="ux4g-input-input" type="email" value={draft.email} onChange={(event) => update('email', event.target.value)} placeholder="meena@example.test" /></div></Field>
-            </div>
-          </div>
-        )}
-
-        {draft.step === 6 && (
-          <div className="review-step-container">
-            <h2 id="active-step-title" className="ux4g-heading-l-strong">Review your complaint</h2>
-            <p className="ux4g-body-m-default" style={{ marginBlockEnd: '1.5rem', color: '#64748B' }}>
-              Please verify that all details are accurate before generating your official complaint summary.
-            </p>
-
-            <div className="review-cards-list">
-              {/* 1. Incident summary */}
-              <div className="review-card-item">
-                <div className="review-card-header">
-                  <div className="review-card-title-group">
-                    <span className="review-card-icon-square">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                      </svg>
-                    </span>
-                    <h3 className="review-card-title">Incident summary</h3>
-                  </div>
-                  <button className="review-edit-btn" onClick={() => update('step', 1)} type="button">
-                    Edit
-                  </button>
-                </div>
-                <p className="review-card-body-text">{draft.narrative || 'Not provided'}</p>
-              </div>
-
-              {/* 2. Transaction details */}
-              <div className="review-card-item">
-                <div className="review-card-header">
-                  <div className="review-card-title-group">
-                    <span className="review-card-icon-square">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-                      </svg>
-                    </span>
-                    <h3 className="review-card-title">Transaction details</h3>
-                  </div>
-                  <button className="review-edit-btn" onClick={() => update('step', 2)} type="button">
-                    Edit
-                  </button>
-                </div>
-                <div className="review-card-grid">
-                  <div><span className="review-meta-label">Amount Lost</span><strong className="review-meta-value">{draft.amount ? `₹${Number(draft.amount).toLocaleString('en-IN')}` : 'Unknown'}</strong></div>
-                  <div><span className="review-meta-label">Payment Method</span><strong className="review-meta-value">{draft.paymentMethod || 'Unknown'}</strong></div>
-                  <div><span className="review-meta-label">Reference / UTR ID</span><strong className="review-meta-value">{draft.transactionId || 'Not provided'}</strong></div>
-                  <div><span className="review-meta-label">Recipient Handle</span><strong className="review-meta-value">{draft.recipient || 'Not provided'}</strong></div>
-                </div>
-              </div>
-
-              {/* 3. Suspect & Contact details */}
-              <div className="review-card-item">
-                <div className="review-card-header">
-                  <div className="review-card-title-group">
-                    <span className="review-card-icon-square">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                      </svg>
-                    </span>
-                    <h3 className="review-card-title">Suspect & contact details</h3>
-                  </div>
-                  <button className="review-edit-btn" onClick={() => update('step', 3)} type="button">
-                    Edit
-                  </button>
-                </div>
-                <div className="review-card-grid">
-                  <div><span className="review-meta-label">Contact Channel</span><strong className="review-meta-value">{draft.contactChannel || 'Unknown'}</strong></div>
-                  <div><span className="review-meta-label">Phone Number</span><strong className="review-meta-value">{draft.suspectPhone || 'Unknown'}</strong></div>
-                  <div><span className="review-meta-label">Handle / Social</span><strong className="review-meta-value">{draft.suspectHandle || 'Unknown'}</strong></div>
-                  <div><span className="review-meta-label">Website / App</span><strong className="review-meta-value">{draft.suspectWebsite || 'Unknown'}</strong></div>
-                </div>
-              </div>
-
-              {/* 4. Evidence */}
-              <div className="review-card-item">
-                <div className="review-card-header">
-                  <div className="review-card-title-group">
-                    <span className="review-card-icon-square">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-                      </svg>
-                    </span>
-                    <h3 className="review-card-title">Evidence</h3>
-                  </div>
-                  <button className="review-edit-btn" onClick={() => update('step', 4)} type="button">
-                    Edit
-                  </button>
-                </div>
-                <p className="review-card-body-text">
-                  {draft.evidence.length ? `${draft.evidence.length} file(s) attached` : 'No evidence attached'}
-                </p>
-              </div>
-
-              {/* 5. Citizen details */}
-              <div className="review-card-item">
-                <div className="review-card-header">
-                  <div className="review-card-title-group">
-                    <span className="review-card-icon-square">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                      </svg>
-                    </span>
-                    <h3 className="review-card-title">Citizen details</h3>
-                  </div>
-                  <button className="review-edit-btn" onClick={() => update('step', 5)} type="button">
-                    Edit
-                  </button>
-                </div>
-                <div className="review-card-grid">
-                  <div><span className="review-meta-label">Full Name</span><strong className="review-meta-value">{draft.fullName || 'Missing'}</strong></div>
-                  <div><span className="review-meta-label">Mobile Number</span><strong className="review-meta-value">{draft.mobile || 'Missing'}</strong></div>
-                  <div><span className="review-meta-label">State</span><strong className="review-meta-value">{draft.state || 'Missing'}</strong></div>
-                  <div><span className="review-meta-label">District / City</span><strong className="review-meta-value">{draft.city || 'Missing'}</strong></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="review-consent-block">
-              <label className="custom-checkbox-card">
-                <input type="checkbox" checked={draft.reviewed} onChange={(e) => update('reviewed', e.target.checked)} />
-                <span className="checkbox-box" />
-                <span className="checkbox-text">I reviewed the information and corrected anything inaccurate.</span>
-              </label>
-
-              <label className="custom-checkbox-card">
-                <input type="checkbox" checked={draft.prototypeConsent} onChange={(e) => update('prototypeConsent', e.target.checked)} />
-                <span className="checkbox-box" />
-                <span className="checkbox-text">I consent to save this report on this device and view its acknowledgement summary.</span>
-              </label>
-            </div>
-
-            <div style={{ marginBlockStart: '2rem' }}>
-              <button className="submit-complaint-btn" onClick={submit} type="button">
-                Save report and view acknowledgement →
-              </button>
-            </div>
-          </div>
-        )}
-
-          <div className="step-actions">
-            <button className="ux4g-btn ux4g-btn-outline-primary ux4g-btn-md" disabled={draft.step === 0} onClick={() => update('step', Math.max(0, draft.step - 1))} type="button">
-              <span className="ux4g-icon-outlined" aria-hidden="true">arrow_back</span> Back
-            </button>
-            {draft.step < 6 && draft.step !== 1 && (
-              <button className="ux4g-btn ux4g-btn-primary ux4g-btn-md" onClick={goNext} type="button">
-                Continue <span className="ux4g-icon-outlined" aria-hidden="true">arrow_forward</span>
+                ← View Step 0 Act now
               </button>
             )}
           </div>
-        </section>
-        {draft.step === 0 && (
-          <aside className="report-sidebar-guidance" aria-label="Immediate safety guidance">
-            <div className="sidebar-card-container">
-              <h2 className="sidebar-card-title">First, reduce further loss</h2>
-              <p className="sidebar-card-subtitle">Essential immediate actions to protect your account.</p>
+          <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${(currentStage / 5) * 100}%`, background: '#1E40AF', transition: 'width 0.3s ease' }} />
+          </div>
+        </div>
+      </div>
 
-              <div className="sidebar-action-cards-list">
-                {/* 1. Call 1930 */}
-                <a href="tel:1930" className="sidebar-action-card-item">
-                  <div className="sidebar-card-left">
-                    <div className="sidebar-icon-square support-action-danger">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="sidebar-card-label">Call 1930</span>
-                      <span className="sidebar-card-subtext">Report immediately if money has been transferred.</span>
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </a>
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 0 — FIRST RESPONSE SAFETY ACTIONS (ACT NOW) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 0 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <ActNowContent
+            immediateActions={draft.immediateActions}
+            onUpdateAction={(key, val) => update('immediateActions', { ...draft.immediateActions, [key]: val })}
+            onContinue={() => update('step', 1)}
+          />
+        </div>
+      )}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 1 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <header style={{ marginBlockEnd: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Tell us what happened in your own words</h1>
+            <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+              Start wherever feels easiest. Include what you remember; you do not need to know the official cybercrime category.
+            </p>
+          </header>
 
-                {/* 2. Contact your bank */}
-                <a href="/help" className="sidebar-action-card-item">
-                  <div className="sidebar-card-left">
-                    <div className="sidebar-icon-square">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="3" y1="21" x2="21" y2="21"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M12 3L2 10h20L12 3z"/><line x1="6" y1="10" x2="6" y2="21"/><line x1="10" y1="10" x2="10" y2="21"/><line x1="14" y1="10" x2="14" y2="21"/><line x1="18" y1="10" x2="18" y2="21"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="sidebar-card-label">Contact your bank</span>
-                      <span className="sidebar-card-subtext">Ask about stopping or recalling the transaction.</span>
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </a>
-
-                {/* 3. Do not pay again */}
-                <a href="/help" className="sidebar-action-card-item">
-                  <div className="sidebar-card-left">
-                    <div className="sidebar-icon-square support-action-warning">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="sidebar-card-label">Do not pay again</span>
-                      <span className="sidebar-card-subtext">Ignore requests for recovery fees or verification payments.</span>
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </a>
-
-                {/* 4. Preserve evidence */}
-                <a href="/learn" className="sidebar-action-card-item">
-                  <div className="sidebar-card-left">
-                    <div className="sidebar-icon-square">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <span className="sidebar-card-label">Preserve evidence</span>
-                      <span className="sidebar-card-subtext">Keep original messages, receipts and screenshots.</span>
-                    </div>
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                </a>
+          {/* Prompt Guidance Accordion */}
+          <div style={{ marginBlockEnd: '1.25rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+            <button
+              type="button"
+              onClick={() => setPromptExpanded(!promptExpanded)}
+              style={{ width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontWeight: 700, fontSize: '0.875rem', color: '#1E40AF' }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span className="ux4g-icon-outlined" style={{ fontSize: '1.1rem' }}>help_outline</span>
+                What should I include in my description?
+              </span>
+              <span>{promptExpanded ? '▲' : '▼'}</span>
+            </button>
+            {promptExpanded && (
+              <div style={{ padding: '0 1rem 0.85rem 1rem', fontSize: '0.85rem', color: '#475569', borderTop: '1px solid #E2E8F0', paddingTop: '0.65rem' }}>
+                <ul style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <li>How did the person or account contact you? (Phone, SMS, WhatsApp, Email, Website)</li>
+                  <li>What did they ask you to do or claim was happening?</li>
+                  <li>Did you transfer money, share information, or download an app?</li>
+                  <li>Approximate date, time, and amounts transferred</li>
+                  <li>Any phone numbers, UPI IDs, bank details, or links you remember</li>
+                </ul>
               </div>
+            )}
+          </div>
 
-              {/* Note 1: Why we ask this */}
-              <div className="sidebar-info-banner" style={{ marginBlockStart: '1rem' }}>
-                <div className="sidebar-shield-badge">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-                  </svg>
-                </div>
-                <div>
-                  <strong style={{ display: 'block', color: 'var(--cfr-navy)', fontSize: '0.875rem' }}>Why we ask this</strong>
-                  <span>These details help organise the report and guide you to the right next step.</span>
-                </div>
-              </div>
+          {/* Story Narrative Textarea */}
+          <Field label="What happened?" hint="Describe the incident naturally. You can correct details on the next step.">
+            <textarea
+              rows={7}
+              value={draft.narrative}
+              onChange={(e) => update('narrative', e.target.value)}
+              placeholder="Describe what occurred, approximate dates or times, transaction amounts, suspect phone numbers, UPI IDs, website links, or names you remember."
+              style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1.5px solid #CBD5E1', fontSize: '0.95rem', fontFamily: 'inherit', lineHeight: 1.5, outline: 'none' }}
+            />
+          </Field>
 
-              {/* Note 2: Using a shared device? */}
-              <div className="sidebar-info-banner" style={{ marginBlockStart: '0.75rem', background: '#FFFBEB', borderColor: '#FDE68A', color: '#B45309' }}>
-                <div className="sidebar-shield-badge" style={{ background: '#FFFFFF' }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                  </svg>
-                </div>
-                <div>
-                  <strong style={{ display: 'block', color: '#92400E', fontSize: '0.875rem' }}>Using a shared device?</strong>
-                  <span>Clear this draft and sign out when you finish.</span>
-                </div>
+          {/* Safety warning */}
+          <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '0.75rem 1rem', marginBlockEnd: '1.25rem', fontSize: '0.85rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span className="ux4g-icon-outlined" style={{ color: '#D97706' }}>security</span>
+            <span><strong>Safety warning:</strong> Do not enter an OTP, PIN, password, CVV, or complete card number.</span>
+          </div>
+
+          {/* Sample story quick-fill helper */}
+          <div style={{ marginBlockEnd: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <button
+              type="button"
+              onClick={handleAddSampleStory}
+              style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', color: '#1D4ED8', padding: '0.35rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              + Fill sample financial fraud story
+            </button>
+            {sampleLoadedNotice && <span style={{ fontSize: '0.775rem', color: '#166534', fontWeight: 600 }}>✓ Sample narrative loaded</span>}
+          </div>
+
+          {/* Disclosure notice */}
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 1rem', marginBlockEnd: '1.75rem', fontSize: '0.825rem', color: '#475569' }}>
+            <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', marginEnd: '0.4rem' }}>Demo</span>
+            We’ll organise your description into editable details. This does not determine the legal category, and you can correct everything before continuing.
+          </div>
+
+          {/* Bottom Action Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => setShowActNowDrawer(true)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+            >
+              First-response actions
+            </button>
+
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => update('step', 2)}
+                className="ux4g-btn ux4g-btn-outline-primary"
+                style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+              >
+                Skip organising
+              </button>
+              <button
+                type="button"
+                disabled={busy || !draft.narrative.trim()}
+                onClick={handleOrganiseNarrative}
+                className="ux4g-btn ux4g-btn-primary"
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem', opacity: (!draft.narrative.trim() || busy) ? 0.6 : 1 }}
+              >
+                {busy ? 'Organising...' : 'Review what we understood →'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 2 — REVIEW THE DETAILS (Combined Timeline, Tx & Suspect) */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 2 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <header style={{ marginBlockEnd: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Check what we understood</h1>
+            <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+              We organised the information from your description. Correct anything that is wrong, and leave anything you do not know blank.
+            </p>
+          </header>
+
+          {/* SECTION A: TIMELINE */}
+          <div style={{ marginBlockEnd: '2rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="ux4g-icon-outlined" style={{ color: '#1E40AF' }}>event</span>
+              Section A — Timeline of Incident
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <Field label="Incident Date" sourceState={draft.sourceMap.date} optional>
+                <input
+                  type="date"
+                  value={draft.date}
+                  onChange={(e) => { update('date', e.target.value); update('sourceMap', { ...draft.sourceMap, date: 'user' }); }}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Approximate Time" sourceState={draft.sourceMap.time} optional>
+                <input
+                  type="time"
+                  value={draft.time}
+                  onChange={(e) => { update('time', e.target.value); update('sourceMap', { ...draft.sourceMap, time: 'user' }); }}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* SECTION B: TRANSACTIONS */}
+          <div style={{ marginBlockEnd: '2rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="ux4g-icon-outlined" style={{ color: '#1E40AF' }}>payments</span>
+              Section B — Financial Transactions
+            </h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <Field label="Amount Transferred (₹)" sourceState={draft.sourceMap.amount}>
+                <input
+                  type="text"
+                  value={draft.amount}
+                  onChange={(e) => { update('amount', e.target.value); update('sourceMap', { ...draft.sourceMap, amount: 'user' }); }}
+                  placeholder="e.g. 48500"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.95rem', fontWeight: 600 }}
+                />
+              </Field>
+              <Field label="Payment Method" sourceState={draft.sourceMap.paymentMethod}>
+                <select
+                  value={draft.paymentMethod}
+                  onChange={(e) => { update('paymentMethod', e.target.value); update('sourceMap', { ...draft.sourceMap, paymentMethod: 'user' }); }}
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                >
+                  <option value="">Select method...</option>
+                  {paymentMethods.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </Field>
+              <Field label="Your Bank / Payment App" sourceState={draft.sourceMap.provider} optional>
+                <input
+                  type="text"
+                  value={draft.provider}
+                  onChange={(e) => { update('provider', e.target.value); update('sourceMap', { ...draft.sourceMap, provider: 'user' }); }}
+                  placeholder="e.g. SBI, HDFC Bank, PhonePe"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Transaction / UTR Reference ID" sourceState={draft.sourceMap.transactionId} optional>
+                <input
+                  type="text"
+                  value={draft.transactionId}
+                  onChange={(e) => { update('transactionId', e.target.value); update('sourceMap', { ...draft.sourceMap, transactionId: 'user' }); }}
+                  placeholder="e.g. TEST20260827001"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Recipient UPI ID / Account Number" sourceState={draft.sourceMap.recipient} optional>
+                <input
+                  type="text"
+                  value={draft.recipient}
+                  onChange={(e) => { update('recipient', e.target.value); update('sourceMap', { ...draft.sourceMap, recipient: 'user' }); }}
+                  placeholder="e.g. testmerchant@upi"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+            </div>
+          </div>
+
+          {/* SECTION C: PERSON, ACCOUNT OR ORGANISATION INVOLVED */}
+          <div style={{ marginBlockEnd: '1.5rem' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0F172A', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <span className="ux4g-icon-outlined" style={{ color: '#1E40AF' }}>person_search</span>
+              Section C — Person, Account or Organisation Involved
+            </h2>
+
+            <div style={{ marginBlockEnd: '1.25rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1E293B', display: 'block', marginBlockEnd: '0.5rem' }}>
+                How did they contact you? <span style={{ color: '#64748B', fontWeight: 400 }}>(Select all that apply)</span>
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {contactChannelOptions.map((channel) => {
+                  const selectedList = draft.contactChannels || (draft.contactChannel ? [draft.contactChannel] : []);
+                  const isSelected = selectedList.includes(channel);
+                  return (
+                    <button
+                      key={channel}
+                      type="button"
+                      onClick={() => {
+                        const updated = isSelected
+                          ? selectedList.filter((c) => c !== channel)
+                          : [...selectedList, channel];
+                        update('contactChannels', updated);
+                        update('contactChannel', updated.join(', '));
+                      }}
+                      style={{
+                        padding: '0.45rem 0.85rem',
+                        borderRadius: '6px',
+                        border: isSelected ? '1.5px solid #2563EB' : '1px solid #CBD5E1',
+                        background: isSelected ? '#EFF6FF' : '#FFFFFF',
+                        color: isSelected ? '#1E40AF' : '#475569',
+                        fontWeight: isSelected ? 600 : 500,
+                        fontSize: '0.825rem',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', color: isSelected ? '#2563EB' : '#94A3B8' }}>
+                        {isSelected ? '☑' : '☐'}
+                      </span>
+                      {channel}
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          </aside>
-        )}
-      </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+              <Field label="Name or Handle Used" optional>
+                <input
+                  type="text"
+                  value={draft.suspectDisplayName}
+                  onChange={(e) => update('suspectDisplayName', e.target.value)}
+                  placeholder="e.g. Officer Sharma, @trading_guru"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Organisation They Claimed to Represent" optional>
+                <input
+                  type="text"
+                  value={draft.suspectOrgClaimed}
+                  onChange={(e) => update('suspectOrgClaimed', e.target.value)}
+                  placeholder="e.g. Bank fraud department, Police, Customs"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Caller / Contact Phone Number" optional>
+                <input
+                  type="text"
+                  value={draft.suspectPhone}
+                  onChange={(e) => update('suspectPhone', e.target.value)}
+                  placeholder="e.g. +91 98765 43210"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Website Link or App Name" optional>
+                <input
+                  type="text"
+                  value={draft.suspectWebsite}
+                  onChange={(e) => update('suspectWebsite', e.target.value)}
+                  placeholder="e.g. https://scam-site.example"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+            </div>
+
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 1rem', fontSize: '0.825rem', color: '#475569' }}>
+              <strong>Guidance:</strong> Do not investigate or contact the person yourself. Add only what you already know from your records.
+            </div>
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => update('step', 1)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              ← Back to description
+            </button>
+            <button
+              type="button"
+              onClick={() => update('step', 3)}
+              className="ux4g-btn ux4g-btn-primary"
+              style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
+            >
+              Continue to evidence →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 3 — ADD EVIDENCE */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 3 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <header style={{ marginBlockEnd: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Add any evidence you have</h1>
+            <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+              Evidence can help support the complaint, but you can continue without it and add it later where the official service allows.
+            </p>
+          </header>
+
+          {/* Safety Notice */}
+          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '8px', padding: '0.85rem 1rem', marginBlockEnd: '1.5rem', fontSize: '0.85rem', color: '#1E40AF' }}>
+            <strong>Protect sensitive information:</strong> Do not upload passwords, PINs, CVVs, OTPs, complete card numbers, or unrelated identity documents.
+          </div>
+
+          {/* Upload Drop Zone */}
+          <div style={{ border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '2rem 1.5rem', textAlign: 'center', background: '#F8FAFC', marginBlockEnd: '1.5rem' }}>
+            <span className="ux4g-icon-outlined" style={{ fontSize: '2.5rem', color: '#1E40AF', marginBlockEnd: '0.5rem' }}>cloud_upload</span>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>Upload transaction receipt, screenshot, or call log</h3>
+            <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 1rem 0' }}>Supports PNG, JPG, PDF up to 10 MB per file</p>
+            
+            <label className="ux4g-btn ux4g-btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              <span className="ux4g-icon-outlined" style={{ fontSize: '1.1rem' }}>attach_file</span>
+              Choose file from device
+              <input type="file" onChange={handleAddEvidenceFile} style={{ display: 'none' }} accept="image/*,.pdf" />
+            </label>
+          </div>
+
+          {/* Evidence Attachments List */}
+          {draft.evidence.length > 0 && (
+            <div style={{ marginBlockEnd: '1.5rem' }}>
+              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.75rem 0' }}>
+                Attached evidence ({draft.evidence.length} file{draft.evidence.length > 1 ? 's' : ''})
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {draft.evidence.map((item) => (
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: '#F1F5F9', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span className="ux4g-icon-outlined" style={{ color: '#1E40AF' }}>insert_drive_file</span>
+                      <div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#0F172A' }}>{item.name}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#64748B', marginLeft: '0.5rem' }}>({Math.round(item.size / 1024)} KB)</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveEvidence(item.id)}
+                      style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Storage Explanation */}
+          <div style={{ fontSize: '0.825rem', color: '#64748B', lineHeight: 1.4, marginBlockEnd: '1.75rem' }}>
+            Keep original files on your device. Files attached here are stored locally in your browser memory for preparing your complaint pack and are not uploaded to any remote server.
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => update('step', 2)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              ← Back to details
+            </button>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {draft.evidence.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => update('step', 4)}
+                  className="ux4g-btn ux4g-btn-outline-primary"
+                  style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+                >
+                  Continue without evidence
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => update('step', 4)}
+                className="ux4g-btn ux4g-btn-primary"
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
+              >
+                Continue to About you →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 4 — ABOUT YOU */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 4 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <header style={{ marginBlockEnd: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>About you</h1>
+            <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+              Provide contact details needed for complaint preparation and verification.
+            </p>
+          </header>
+
+          {/* First Question: Reporter relation */}
+          <div style={{ marginBlockEnd: '1.75rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1.15rem' }}>
+            <label style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBlockEnd: '0.65rem' }}>
+              Who experienced this incident?
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem' }}>
+              {[
+                ['self', 'I did'],
+                ['child', 'A child in my care'],
+                ['family', 'A family member or friend'],
+                ['assisted', 'Someone I am assisting'],
+                ['org', 'An organisation'],
+              ].map(([val, lbl]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => update('reporterRelation', val as ReporterRelation)}
+                  style={{
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    border: draft.reporterRelation === val ? '2px solid #1E40AF' : '1px solid #CBD5E1',
+                    background: draft.reporterRelation === val ? '#EFF6FF' : '#FFFFFF',
+                    color: draft.reporterRelation === val ? '#1E40AF' : '#334155',
+                    fontWeight: draft.reporterRelation === val ? 700 : 500,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dynamic Contact Form Fields */}
+          {draft.reporterRelation === 'org' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBlockEnd: '1.5rem' }}>
+              
+              {/* Organisation Details Box */}
+              <div style={{ background: '#F8FAFC', border: '1.5px solid #CBD5E1', borderRadius: '12px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBlockEnd: '0.85rem' }}>
+                  <span className="ux4g-icon-outlined" style={{ color: '#1E40AF', fontSize: '1.1rem' }}>domain</span>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Organisation / Business Entity Details
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                  <Field label="Organisation Name">
+                    <input
+                      type="text"
+                      value={draft.orgName}
+                      onChange={(e) => update('orgName', e.target.value)}
+                      placeholder="e.g. Acme Technologies Pvt Ltd"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                    />
+                  </Field>
+
+                  <Field label="Organisation Type">
+                    <select
+                      value={draft.orgType}
+                      onChange={(e) => update('orgType', e.target.value)}
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                    >
+                      <option value="Private Company">Private Limited / Public Co</option>
+                      <option value="LLP / Partnership">Partnership / LLP</option>
+                      <option value="Proprietorship">Proprietorship / SME</option>
+                      <option value="Non-Profit">Non-Profit / NGO / Trust</option>
+                      <option value="Educational">Educational Institution</option>
+                      <option value="Government">Government Department / PSU</option>
+                    </select>
+                  </Field>
+
+                  <Field label="Registration / CIN / GSTIN Number" optional hint="CIN, GSTIN, or Corporate Identification Number">
+                    <input
+                      type="text"
+                      value={draft.orgRegId}
+                      onChange={(e) => update('orgRegId', e.target.value)}
+                      placeholder="e.g. 27AAAAA0000A1Z5 / U12345MH2020PTC123456"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Authorised Representative Details Box */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBlockEnd: '0.85rem' }}>
+                  <span className="ux4g-icon-outlined" style={{ color: '#1E40AF', fontSize: '1.1rem' }}>badge</span>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Authorised Nodal Representative (Person Filing This Report)
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                  <Field label="Representative Full Name">
+                    <input
+                      type="text"
+                      value={draft.fullName}
+                      onChange={(e) => update('fullName', e.target.value)}
+                      placeholder="e.g. Priya Sharma"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+
+                  <Field label="Designation / Role in Organisation">
+                    <input
+                      type="text"
+                      value={draft.reporterDesignation}
+                      onChange={(e) => update('reporterDesignation', e.target.value)}
+                      placeholder="e.g. IT Security Manager / Director / Legal Counsel"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+
+                  <Field label="Authorised Mobile Number" hint="Where OTP verification & status updates will be sent">
+                    <input
+                      type="tel"
+                      value={draft.mobile}
+                      onChange={(e) => update('mobile', e.target.value)}
+                      placeholder="10-digit mobile number"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+
+                  <Field label="Official Corporate Email">
+                    <input
+                      type="email"
+                      value={draft.email}
+                      onChange={(e) => update('email', e.target.value)}
+                      placeholder="nodal-cyber@company.com"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Location Fields */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <Field label="Registered State / Union Territory">
+                  <input
+                    type="text"
+                    value={draft.state}
+                    onChange={(e) => update('state', e.target.value)}
+                    placeholder="e.g. Maharashtra, Delhi"
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </Field>
+                <Field label="City / Head Office Location">
+                  <input
+                    type="text"
+                    value={draft.city}
+                    onChange={(e) => update('city', e.target.value)}
+                    placeholder="e.g. Mumbai, New Delhi"
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </Field>
+              </div>
+
+            </div>
+          ) : draft.reporterRelation !== 'self' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBlockEnd: '1.5rem' }}>
+              
+              {/* Victim Details Box */}
+              <div style={{ background: '#F0F9FF', border: '1.5px solid #BAE6FD', borderRadius: '12px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBlockEnd: '0.85rem' }}>
+                  <span className="ux4g-icon-outlined" style={{ color: '#0284C7', fontSize: '1.1rem' }}>person</span>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0369A1', margin: 0 }}>
+                    Victim's Details (Person Who Lost Money / Account)
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                  <Field label="Victim's Full Name">
+                    <input
+                      type="text"
+                      value={draft.victimName}
+                      onChange={(e) => update('victimName', e.target.value)}
+                      placeholder="e.g. Ramesh Kumar (Father)"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                    />
+                  </Field>
+
+                  <Field label="Victim's Bank-Registered Mobile" hint="Mobile number linked to the affected bank account (crucial for 1930 / bank freeze)">
+                    <input
+                      type="tel"
+                      value={draft.victimMobile}
+                      onChange={(e) => update('victimMobile', e.target.value)}
+                      placeholder="10-digit mobile number"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Reporter Details Box */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBlockEnd: '0.85rem' }}>
+                  <span className="ux4g-icon-outlined" style={{ color: '#1E40AF', fontSize: '1.1rem' }}>assignment_ind</span>
+                  <h3 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#0F172A', margin: 0 }}>
+                    Your Details (Person Filing This Report)
+                  </h3>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                  <Field label="Your Full Name">
+                    <input
+                      type="text"
+                      value={draft.fullName}
+                      onChange={(e) => update('fullName', e.target.value)}
+                      placeholder="e.g. Rahul Sharma"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+
+                  <Field label="Your Mobile Number" hint="Where OTP & status SMS updates will be sent">
+                    <input
+                      type="tel"
+                      value={draft.mobile}
+                      onChange={(e) => update('mobile', e.target.value)}
+                      placeholder="10-digit mobile number"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+
+                  <Field label="Your Email Address" optional>
+                    <input
+                      type="email"
+                      value={draft.email}
+                      onChange={(e) => update('email', e.target.value)}
+                      placeholder="name@example.com"
+                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* Primary Contact Preference */}
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBlockEnd: '0.5rem' }}>
+                  Who should police / bank fraud cell call for follow-up?
+                </label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600, color: '#1E40AF' }}>
+                    <input
+                      type="radio"
+                      name="primaryContact"
+                      checked={draft.primaryContactRole === 'reporter'}
+                      onChange={() => update('primaryContactRole', 'reporter')}
+                    />
+                    <span>Contact Me (Reporter) — Recommended for elderly/assisted victims</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', color: '#475569' }}>
+                    <input
+                      type="radio"
+                      name="primaryContact"
+                      checked={draft.primaryContactRole === 'victim'}
+                      onChange={() => update('primaryContactRole', 'victim')}
+                    />
+                    <span>Contact Victim Directly</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Location Fields */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <Field label="State / Union Territory">
+                  <input
+                    type="text"
+                    value={draft.state}
+                    onChange={(e) => update('state', e.target.value)}
+                    placeholder="e.g. Maharashtra, Delhi"
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </Field>
+                <Field label="District / City">
+                  <input
+                    type="text"
+                    value={draft.city}
+                    onChange={(e) => update('city', e.target.value)}
+                    placeholder="e.g. Mumbai, New Delhi"
+                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </Field>
+              </div>
+
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBlockEnd: '1.5rem' }}>
+              <Field label="Full Name">
+                <input
+                  type="text"
+                  value={draft.fullName}
+                  onChange={(e) => update('fullName', e.target.value)}
+                  placeholder="e.g. Rahul Sharma"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Mobile Number">
+                <input
+                  type="tel"
+                  value={draft.mobile}
+                  onChange={(e) => update('mobile', e.target.value)}
+                  placeholder="10-digit mobile number"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="Email Address" optional>
+                <input
+                  type="email"
+                  value={draft.email}
+                  onChange={(e) => update('email', e.target.value)}
+                  placeholder="name@example.com"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="State / Union Territory">
+                <input
+                  type="text"
+                  value={draft.state}
+                  onChange={(e) => update('state', e.target.value)}
+                  placeholder="e.g. Maharashtra, Delhi"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+              <Field label="District / City">
+                <input
+                  type="text"
+                  value={draft.city}
+                  onChange={(e) => update('city', e.target.value)}
+                  placeholder="e.g. Mumbai, New Delhi"
+                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                />
+              </Field>
+            </div>
+          )}
+
+          {/* Privacy Box */}
+          <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', marginBlockEnd: '1.75rem', fontSize: '0.85rem', color: '#475569' }}>
+            <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Why we ask</h3>
+            <p style={{ margin: 0, lineHeight: 1.4 }}>
+              These details help prepare the complaint and may be required for verification on the official reporting service. This prototype does not contact you or submit the information. Do not enter Aadhaar, PAN, passwords, PINs, or CVVs.
+            </p>
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => update('step', 3)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              ← Back to evidence
+            </button>
+            <button
+              type="button"
+              onClick={() => update('step', 5)}
+              className="ux4g-btn ux4g-btn-primary"
+              style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
+            >
+              Review your complaint →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 5 — REVIEW AND PREPARE */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 5 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          {/* Status Notice */}
+          <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '1.15rem', marginBlockEnd: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span className="ux4g-icon-outlined" style={{ color: '#1E40AF', fontSize: '1.5rem' }}>verified</span>
+              <div>
+                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#1E40AF', margin: 0 }}>Ready for submission</h2>
+                <p style={{ fontSize: '0.875rem', color: '#1E3A8A', margin: '0.2rem 0 0 0' }}>Review your information below before submitting your complaint to Cyber First Response.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Section Breakdown Summaries */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', marginBlockEnd: '1.75rem' }}>
+            
+            {/* Story Summary */}
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>1. Incident Description</h3>
+                <button type="button" onClick={() => update('step', 1)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: '#334155', margin: 0, lineHeight: 1.4 }}>{draft.narrative || 'No description provided.'}</p>
+            </div>
+
+            {/* Transactions Summary */}
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>2. Organised Transaction Details</h3>
+                <button type="button" onClick={() => update('step', 2)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+              </div>
+              <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem' }}>
+                <div><strong>Amount:</strong> ₹{draft.amount || 'Not specified'}</div>
+                <div><strong>Method:</strong> {draft.paymentMethod || 'Not specified'}</div>
+                <div><strong>Bank/App:</strong> {draft.provider || 'Not specified'}</div>
+                <div><strong>UTR / Txn ID:</strong> {draft.transactionId || 'Not specified'}</div>
+                <div><strong>Recipient:</strong> {draft.recipient || 'Not specified'}</div>
+              </div>
+            </div>
+
+            {/* Evidence Summary */}
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>3. Attached Evidence</h3>
+                <button type="button" onClick={() => update('step', 3)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#334155', margin: 0 }}>
+                {draft.evidence.length > 0 ? `${draft.evidence.length} evidence attachment(s) included.` : 'No evidence attachments added.'}
+              </p>
+            </div>
+
+            {/* About You / Reporter & Victim Summary */}
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>4. Reporter & Victim Contact Details</h3>
+                <button type="button" onClick={() => update('step', 4)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+              </div>
+
+              {draft.reporterRelation === 'org' ? (
+                <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><strong>Organisation:</strong> {draft.orgName || 'Not specified'} ({draft.orgType})</div>
+                  <div><strong>CIN/GSTIN:</strong> {draft.orgRegId || 'Not specified'}</div>
+                  <div><strong>Nodal Representative:</strong> {draft.fullName || 'Not specified'}</div>
+                  <div><strong>Designation:</strong> {draft.reporterDesignation || 'Not specified'}</div>
+                  <div><strong>Mobile (OTP):</strong> {draft.mobile || 'Not specified'}</div>
+                  <div><strong>Corporate Email:</strong> {draft.email || 'Not specified'}</div>
+                  <div><strong>Location:</strong> {[draft.city, draft.state].filter(Boolean).join(', ') || 'Not specified'}</div>
+                </div>
+              ) : draft.reporterRelation !== 'self' ? (
+                <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem' }}>
+                  <div><strong>Victim Name:</strong> {draft.victimName || 'Not specified'}</div>
+                  <div><strong>Victim Bank Phone:</strong> {draft.victimMobile || 'Not specified'}</div>
+                  <div><strong>Reporter Name:</strong> {draft.fullName || 'Not specified'}</div>
+                  <div><strong>Reporter Mobile (OTP):</strong> {draft.mobile || 'Not specified'}</div>
+                  <div><strong>Primary Call Contact:</strong> {draft.primaryContactRole === 'reporter' ? 'Reporter (Me)' : 'Victim'}</div>
+                  <div><strong>Location:</strong> {[draft.city, draft.state].filter(Boolean).join(', ') || 'Not specified'}</div>
+                </div>
+              ) : (
+                <div style={{ fontSize: '0.85rem', color: '#334155', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.5rem' }}>
+                  <div><strong>Name:</strong> {draft.fullName || 'Not specified'}</div>
+                  <div><strong>Mobile:</strong> {draft.mobile || 'Not specified'}</div>
+                  <div><strong>Location:</strong> {[draft.city, draft.state].filter(Boolean).join(', ') || 'Not specified'}</div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Unselected Confirmation Checkbox */}
+          <div style={{ marginBlockEnd: '1.75rem', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '0.85rem 1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', fontSize: '0.875rem', color: '#92400E', fontWeight: 600 }}>
+              <input
+                type="checkbox"
+                checked={draft.reviewed}
+                onChange={(e) => update('reviewed', e.target.checked)}
+                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+              />
+              <span>I have reviewed the information and corrected anything I know is inaccurate.</span>
+            </label>
+          </div>
+
+          {/* Bottom Actions */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => update('step', 4)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              ← Back to About you
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                refreshCaptcha();
+                setShowVerifyModal(true);
+              }}
+              className="ux4g-btn ux4g-btn-primary"
+              style={{ padding: '0.6rem 2.25rem', fontSize: '0.95rem', fontWeight: 700 }}
+            >
+              Submit complaint →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* STAGE 6 — COMPLAINT SUBMISSION SUCCESS CONFIRMATION */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {currentStage === 6 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2.5rem 2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
+          
+          <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', color: '#15803D', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBlockEnd: '1.25rem' }}>
+            <span className="ux4g-icon-outlined" style={{ fontSize: '2.5rem' }}>check_circle</span>
+          </div>
+
+          <h1 style={{ fontSize: '1.65rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.5rem 0' }}>Complaint Registered Successfully!</h1>
+          <p style={{ fontSize: '1rem', color: '#475569', maxInlineSize: '580px', marginInline: 'auto', marginBlockEnd: '1.75rem', lineHeight: 1.5 }}>
+            Your financial cyber fraud complaint has been registered on <strong>Cyber First Response</strong> and dispatched for fast-track financial cell review.
+          </p>
+
+          {/* Reference Card */}
+          <div style={{ background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '12px', padding: '1.5rem', maxInlineSize: '580px', marginInline: 'auto', marginBlockEnd: '2rem', textAlign: 'left' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', borderBottom: '1px solid #E2E8F0', paddingBottom: '0.75rem', marginBlockEnd: '0.75rem' }}>
+              <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 600 }}>Complaint Reference ID</span>
+              <span style={{ fontSize: '1.1rem', fontWeight: 800, color: '#1E40AF', letterSpacing: '0.5px' }}>
+                {(() => {
+                  try {
+                    const ack = localStorage.getItem('cfr-local-acknowledgement');
+                    return ack ? JSON.parse(ack).id || 'CFR-2026-894129' : 'CFR-2026-894129';
+                  } catch {
+                    return 'CFR-2026-894129';
+                  }
+                })()}
+              </span>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.65rem', fontSize: '0.875rem', color: '#334155' }}>
+              <div><strong>Amount Flagged:</strong> ₹{draft.amount || '48,500'}</div>
+              <div><strong>Payment Method:</strong> {draft.paymentMethod || 'UPI'}</div>
+              <div><strong>Reporter Name:</strong> {draft.fullName || 'Rahul'}</div>
+              <div><strong>Mobile:</strong> {draft.mobile || 'Registered'}</div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <a
+              href="/track"
+              className="ux4g-btn ux4g-btn-primary"
+              style={{ padding: '0.65rem 2rem', fontSize: '0.95rem', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+            >
+              <span>Go to Complaint Tracking Page →</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.65rem 1.5rem', fontSize: '0.9rem' }}
+            >
+              Print Receipt
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────── */}
+      {/* CAPTCHA & MOBILE OTP VERIFICATION MODAL */}
+      {/* ───────────────────────────────────────────────────────────── */}
+      {showVerifyModal && (
+        <div role="dialog" aria-modal="true" style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(4px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#FFFFFF', borderRadius: '16px', maxInlineSize: '540px', inlineSize: '100%', padding: '1.75rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBlockEnd: '1rem' }}>
+              <div>
+                <span style={{ background: '#EFF6FF', color: '#1E40AF', fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.6rem', borderRadius: '12px', border: '1px solid #BFDBFE' }}>Security Verification</span>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0F172A', margin: '0.35rem 0 0 0' }}>Verify to submit complaint</h2>
+              </div>
+              <button type="button" onClick={() => setShowVerifyModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: '#64748B' }}>✕</button>
+            </div>
+
+            <p style={{ fontSize: '0.875rem', color: '#475569', margin: '0 0 1.25rem 0', lineHeight: 1.4 }}>
+              Confirm security Captcha and verify mobile number <strong>{draft.mobile || '+91 98765 43210'}</strong> to register your report.
+            </p>
+
+            {/* 1. Visual Captcha Challenge */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', marginBlockEnd: '1.25rem' }}>
+              <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0F172A', display: 'block', marginBlockEnd: '0.5rem' }}>
+                1. Security Captcha Challenge
+              </label>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBlockEnd: '0.65rem' }}>
+                <div style={{ background: '#0F172A', color: '#38BDF8', letterSpacing: '6px', fontFamily: 'monospace', fontSize: '1.35rem', fontWeight: 900, padding: '0.45rem 1.25rem', borderRadius: '6px', userSelect: 'none', textDecoration: 'line-through' }}>
+                  {captchaCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={refreshCaptcha}
+                  style={{ background: '#FFFFFF', border: '1px solid #CBD5E1', color: '#1E40AF', padding: '0.45rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                >
+                  <span className="ux4g-icon-outlined" style={{ fontSize: '0.9rem' }}>refresh</span> Refresh
+                </button>
+              </div>
+
+              <input
+                type="text"
+                value={captchaInput}
+                onChange={(e) => { setCaptchaInput(e.target.value); setCaptchaError(''); }}
+                placeholder="Enter characters shown above"
+                style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: captchaError ? '1.5px solid #DC2626' : '1px solid #CBD5E1', fontSize: '0.9rem', textTransform: 'uppercase' }}
+              />
+              {captchaError && <p style={{ fontSize: '0.775rem', color: '#DC2626', margin: '0.35rem 0 0 0', fontWeight: 600 }}>{captchaError}</p>}
+            </div>
+
+            {/* 2. Mobile OTP Verification */}
+            <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', marginBlockEnd: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                  2. Mobile OTP Verification
+                </label>
+                <span style={{ fontSize: '0.75rem', background: '#DCFCE7', color: '#15803D', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px' }}>Demo OTP: 123456</span>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 0.5rem 0' }}>
+                Enter the 6-digit OTP code sent to {draft.mobile || 'your mobile number'}.
+              </p>
+
+              <input
+                type="text"
+                maxLength={6}
+                value={otpInput}
+                onChange={(e) => { setOtpInput(e.target.value); setOtpError(''); }}
+                placeholder="Enter 6-digit OTP (123456)"
+                style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: otpError ? '1.5px solid #DC2626' : '1px solid #CBD5E1', fontSize: '0.95rem', letterSpacing: '2px', fontWeight: 600 }}
+              />
+              {otpError && <p style={{ fontSize: '0.775rem', color: '#DC2626', margin: '0.35rem 0 0 0', fontWeight: 600 }}>{otpError}</p>}
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setShowVerifyModal(false)}
+                className="ux4g-btn ux4g-btn-outline-primary"
+                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  let valid = true;
+                  if (captchaInput.trim().toUpperCase() !== captchaCode) {
+                    setCaptchaError('Incorrect Captcha code. Try again.');
+                    valid = false;
+                  }
+                  if (!otpInput.trim() || (otpInput.trim() !== '123456' && otpInput.trim().length !== 6)) {
+                    setOtpError('Enter valid 6-digit OTP (use 123456 for demo).');
+                    valid = false;
+                  }
+                  if (valid) {
+                    setShowVerifyModal(false);
+                    handleCreateComplaintPack();
+                  }
+                }}
+                className="ux4g-btn ux4g-btn-primary"
+                style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem', fontWeight: 700 }}
+              >
+                {isSubmitting ? 'Registering complaint...' : 'Confirm & Submit Complaint →'}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -24,6 +24,7 @@ export function interpretIncidentDeterministically(narrative: string): IncidentI
   extractedRecipient?: string;
   extractedDate?: string;
   extractedTime?: string;
+  extractedClaimedOrg?: string;
 } {
   // First priority: look for currency symbol (₹, RS, RS., INR) followed by numbers
   let amount: number | null = null;
@@ -64,15 +65,27 @@ export function interpretIncidentDeterministically(narrative: string): IncidentI
 
   const paymentMethod = lower.includes('upi') ? 'UPI'
     : (lower.includes('card') || lower.includes('credit') || lower.includes('debit')) ? 'Card'
-    : (lower.includes('bank') || lower.includes('neft') || lower.includes('rtgs') || lower.includes('imps')) ? 'Bank transfer'
+    : (lower.includes('bank transfer') || lower.includes('neft') || lower.includes('rtgs') || lower.includes('imps')) ? 'Bank transfer'
     : (lower.includes('paytm') || lower.includes('wallet') || lower.includes('phonepe') || lower.includes('gpay')) ? 'Wallet'
     : null;
 
-  const providerMatch = narrative.match(/(sbi|hdfc|icici|axis|kotak|paytm|phonepe|gpay|google pay|pnb|canara|bob|bank)/i);
-  const extractedProvider = providerMatch ? (providerMatch[0].toLowerCase() === 'bank' ? 'Bank Fraud Dept' : providerMatch[0].toUpperCase()) : undefined;
+  // Extract actual bank or payment app used (do NOT map scammer's claimed org like "Bank Fraud Dept" to actual provider)
+  const actualBankMatch = narrative.match(/\b(sbi|hdfc|icici|axis|kotak|pnb|canara|bob|paytm|phonepe|gpay|google pay)\b/i);
+  const extractedProvider = actualBankMatch ? actualBankMatch[0].toUpperCase() : undefined;
 
-  const txMatch = narrative.match(/(?:transaction reference number|utr|ref|reference|txn|transaction)\s*(?:shown in my banking app)?\s*(?:is|number)?\s*[:#]?\s*([a-z0-9]{8,20})/i);
-  const extractedTxId = txMatch ? txMatch[1] : undefined;
+  // Claimed organization (e.g. "bank's fraud department")
+  const claimedOrgMatch = narrative.match(/(bank(?:'s)?\s+fraud\s+department|police|customs|cbi|trai|support desk)/i);
+  const extractedClaimedOrg = claimedOrgMatch ? 'Bank fraud department' : undefined;
+
+  // Extract transaction reference/UTR ID (ensure "approximately" is never captured)
+  let extractedTxId: string | undefined;
+  const txMatch = narrative.match(/(?:transaction reference number|utr|ref|reference|txn)\s*(?:shown in my banking app)?\s*(?:is|number)?\s*[:#]?\s*([a-z0-9]{8,25})/i);
+  if (txMatch) {
+    const candidate = txMatch[1].trim();
+    if (candidate.toLowerCase() !== 'approximately' && candidate.toLowerCase() !== 'number') {
+      extractedTxId = candidate;
+    }
+  }
 
   const upiMatch = narrative.match(/([a-zA-Z0-9.\-_]+@[a-zA-Z0-9]+)/i);
   const extractedRecipient = upiMatch ? upiMatch[1] : undefined;
@@ -101,10 +114,11 @@ export function interpretIncidentDeterministically(narrative: string): IncidentI
     extractedTime = `${hours.toString().padStart(2, '0')}:${minutes}`;
   }
 
-  const platform = (lower.includes('phone call') || lower.includes('phone') || lower.includes('caller')) ? 'Phone call'
+  const platform = (lower.includes('phone call') || lower.includes('phone') || lower.includes('called')) ? 'Phone call'
     : lower.includes('whatsapp') ? 'WhatsApp'
     : lower.includes('telegram') ? 'Telegram'
     : lower.includes('email') ? 'Email'
+    : lower.includes('sms') ? 'SMS'
     : null;
 
   const missingFields = [!amount && 'amount', !paymentMethod && 'payment method', !platform && 'contact platform', !extractedTxId && 'transaction reference'].filter(Boolean) as string[];
@@ -126,6 +140,7 @@ export function interpretIncidentDeterministically(narrative: string): IncidentI
     extractedRecipient,
     extractedDate,
     extractedTime,
+    extractedClaimedOrg,
   };
 }
 
