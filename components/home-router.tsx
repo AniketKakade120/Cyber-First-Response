@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { VoiceInput } from './voice-input';
 
 function suggestedRoute(value: string) {
   const text = value.toLowerCase();
@@ -29,13 +30,34 @@ export function HomeRouter() {
           Or tell us what happened in your own words
         </h3>
         <p style={{ fontSize: '0.95rem', color: '#64748B', margin: 0, lineHeight: 1.35 }}>
-          We’ll organise the information and suggest a reporting route for you to review.
+          We'll organise the information and suggest a reporting route for you to review.
         </p>
       </div>
 
       <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBlockStart: '0.5rem' }} noValidate>
         {/* Expanded Writing Box with internal placeholder */}
         <div style={{ position: 'relative' }}>
+          {/* Voice Input Panel */}
+          <VoiceInput
+            currentNarrative={description}
+            onTranscript={(text: string) => {
+              setDescription((prev) => {
+                const trimmed = prev.trim();
+                const separator = trimmed ? ' ' : '';
+                return trimmed + separator + text.trim();
+              });
+            }}
+          />
+
+          {/* Divider between voice and text */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBlockEnd: '1rem' }}>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+            <span style={{ fontSize: '0.775rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              or type below
+            </span>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+          </div>
+
           <textarea
             className="checker-input-field"
             value={description}
@@ -59,7 +81,7 @@ export function HomeRouter() {
           </span>
         </div>
 
-        {/* Submit button aligned to right (prototype feature text removed) */}
+        {/* Submit button aligned to right */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBlockStart: '0.25rem' }}>
           <button
             type="submit"

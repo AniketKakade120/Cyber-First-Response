@@ -15,19 +15,26 @@ export function Checker() {
           <label className="field-label-bold" htmlFor="check-type">
             Identifier type <span style={{ color: '#DC2626', fontWeight: 700 }}>*</span>
           </label>
-          <select
-            id="check-type"
-            className="checker-select-field"
-            value={type}
-            onChange={(event) => setType(event.target.value)}
-          >
-            <option value="phone">Phone Number</option>
-            <option value="email">Email Address</option>
-            <option value="upi">UPI ID / VPA</option>
-            <option value="bank">Bank Account Number</option>
-            <option value="website">Website / Domain Link</option>
-            <option value="social">Social Media Handle</option>
-          </select>
+          <div className="checker-select-wrapper">
+            <select
+              id="check-type"
+              className="checker-select-field"
+              value={type}
+              onChange={(event) => setType(event.target.value)}
+            >
+              <option value="phone">Phone Number</option>
+              <option value="email">Email Address</option>
+              <option value="upi">UPI ID / VPA</option>
+              <option value="bank">Bank Account Number</option>
+              <option value="website">Website / Domain Link</option>
+              <option value="social">Social Media Handle</option>
+            </select>
+            <span className="checker-select-arrow" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+          </div>
         </div>
 
         <div className="form-field">

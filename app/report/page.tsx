@@ -168,7 +168,7 @@ export default function ReportPage() {
   return (
     <>
       <DraftAlertBanner />
-      <ServiceLayout title="File a Cyber Crime Report" subtitle="Citizen-first portal for swift cyber response, incident triage and recovery guidance.">
+      <ServiceLayout>
         <div className="ux4g-container page-section report-selector-page">
           {/* Header Bar */}
           <div className="report-selector-header">

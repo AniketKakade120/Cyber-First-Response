@@ -8,7 +8,6 @@ import { CfrLogo } from './cfr-logo';
 const links = [
   ['/report', 'Report'],
   ['/track', 'Track'],
-  ['/faq', 'FAQ'],
   ['/learn', 'Learn'],
   ['/help', 'Help'],
   ['/check', 'Check Suspect'],
@@ -19,7 +18,7 @@ const languages = [
   { code: 'hi', label: 'हिन्दी (Hindi)' },
   { code: 'ta', label: 'தமிழ் (Tamil)' },
   { code: 'te', label: 'తెలుగు (Telugu)' },
-  { code: 'kn', label: 'கன்னட (Kannada)' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
   { code: 'ml', label: 'മലയാളം (Malayalam)' },
   { code: 'mr', label: 'मराठी (Marathi)' },
   { code: 'gu', label: 'ગુજરાતી (Gujarati)' },
@@ -67,7 +66,7 @@ export function ServiceHeader() {
               <a className="ux4g-label-m-default ux4g-topbar__skip" href="tel:112"><span>Emergency</span><strong>112</strong></a>
             </nav>
             <nav aria-label="Top utilities" className="ux4g-d-flex ux4g-ai-center ux4g-gap-x-xs">
-              <div className="language-selector-wrap" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginEnd: '0.5rem' }}>
+              <div className="language-selector-wrap" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', marginInlineEnd: '0.5rem' }}>
                 <span className="ux4g-icon-outlined" aria-hidden="true" style={{ fontSize: '1.05rem' }}>language</span>
                 <select
                   value={selectedLang}

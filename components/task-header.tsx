@@ -16,7 +16,7 @@ const languages = [
   { code: 'hi', label: 'हिन्दी (Hindi)' },
   { code: 'ta', label: 'தமிழ் (Tamil)' },
   { code: 'te', label: 'తెలుగు (Telugu)' },
-  { code: 'kn', label: 'கன்னட (Kannada)' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)' },
   { code: 'ml', label: 'മലയാളം (Malayalam)' },
   { code: 'mr', label: 'मराठी (Marathi)' },
   { code: 'gu', label: 'ગુજરાતી (Gujarati)' },

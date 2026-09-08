@@ -2,17 +2,19 @@
 
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DRAFT_STORAGE_KEY, emptyDraft } from '../lib/demo-data';
 import { interpretIncident } from '../lib/services';
 import type { EvidenceAttachment, IncidentDraft, ReporterRelation, SourceState, TransactionItem } from '../lib/types';
+import { VoiceInput } from './voice-input';
 
 const stageNames = [
   'Act now',
-  'Tell us',
-  'Review details',
+  'What happened',
+  'Transaction',
+  'Suspect',
   'Evidence',
-  'About you',
+  'Your details',
   'Review',
 ] as const;
 
@@ -28,17 +30,18 @@ function SourceBadge({ state }: { state?: SourceState }) {
 
 function Field({ label, hint, optional, sourceState, children }: { label: string; hint?: string; optional?: boolean; sourceState?: SourceState; children: React.ReactNode }) {
   return (
-    <div className="form-field" style={{ marginBlockEnd: '1.15rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBlockEnd: '0.35rem' }}>
-        <label style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1E293B', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-          {label}
-          {optional && <span style={{ color: '#94A3B8', fontWeight: 400, fontSize: '0.775rem' }}>(optional)</span>}
-          {!optional && <span style={{ color: '#DC2626' }}>*</span>}
+    <div className="cfr-form-field">
+      <div className="cfr-field-header">
+        <label className="cfr-field-label">
+          <span>{label}</span>
+          {!optional && <span className="cfr-field-required">*</span>}
         </label>
         {sourceState && <SourceBadge state={sourceState} />}
       </div>
-      {hint && <p style={{ fontSize: '0.8rem', color: '#64748B', margin: '0 0 0.35rem 0', lineHeight: 1.3 }}>{hint}</p>}
-      {children}
+      {hint && <p style={{ fontSize: '0.775rem', color: '#64748B', margin: '0 0 0.4rem 0', lineHeight: 1.25 }}>{hint}</p>}
+      <div className="cfr-field-input-wrap">
+        {children}
+      </div>
     </div>
   );
 }
@@ -402,7 +405,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
   };
 
   const handleCreateComplaintPack = () => {
-    const ackId = `CFR-2026-${Math.floor(100000 + Math.random() * 900000)}`;
+    const ackId = 'NCRP-2026-0827-48391';
     const localAck = {
       id: ackId,
       at: new Date().toISOString(),
@@ -414,7 +417,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       mobile: draft.mobile,
     };
     localStorage.setItem('cfr-local-acknowledgement', JSON.stringify(localAck));
-    update('step', 6);
+    update('step', 7);
   };
 
   return (
@@ -422,7 +425,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       
       {/* Top Stepper Navigation */}
       <div style={{ marginBlockEnd: '2rem' }}>
-        {/* Desktop 6-stage Stepper */}
+        {/* Desktop 7-stage Stepper */}
         <div className="ux4g-d-none ux4g-d-md-block">
           <ol style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', listStyle: 'none', padding: 0, margin: 0, position: 'relative' }}>
             {stageNames.map((name, stepNum) => {
@@ -450,7 +453,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       border: isCurrent ? '2.5px solid #1E40AF' : isDone ? 'none' : '1px solid #CBD5E1',
                     }}
                   >
-                    {isDone ? '✓' : stepNum}
+                    {isDone ? '✓' : stepNum + 1}
                   </span>
                   <span style={{ fontSize: '0.825rem', fontWeight: isCurrent ? 700 : 500, color: isCurrent ? '#0F172A' : '#64748B' }}>
                     {name}
@@ -467,19 +470,19 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
         {/* Mobile Stepper */}
         <div className="ux4g-d-block ux4g-d-md-none" style={{ background: '#F8FAFC', padding: '0.75rem 1rem', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', fontWeight: 700, color: '#0F172A', marginBlockEnd: '0.35rem' }}>
-            <span>Step {currentStage} of 5 — {stageNames[currentStage]}</span>
+            <span>{currentStage <= 6 ? `Step ${currentStage + 1} of 7 — ${stageNames[currentStage]}` : 'Report complete'}</span>
             {currentStage > 0 && (
               <button
                 type="button"
                 onClick={() => update('step', 0)}
                 style={{ background: 'none', border: 'none', color: '#E87A3A', fontSize: '0.8rem', fontWeight: 700, cursor: 'pointer' }}
               >
-                ← View Step 0 Act now
+                ← View Step 1 Act now
               </button>
             )}
           </div>
           <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${(currentStage / 5) * 100}%`, background: '#1E40AF', transition: 'width 0.3s ease' }} />
+            <div style={{ height: '100%', width: `${(Math.min(currentStage, 6) / 6) * 100}%`, background: '#1E40AF', transition: 'width 0.3s ease' }} />
           </div>
         </div>
       </div>
@@ -532,6 +535,25 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
             )}
           </div>
 
+          {/* Voice Input Panel */}
+          <VoiceInput
+            currentNarrative={draft.narrative}
+            onTranscript={(text: string) => {
+              setDraft((prev) => {
+                const trimmed = prev.narrative.trim();
+                const separator = trimmed ? ' ' : '';
+                return { ...prev, narrative: trimmed + separator + text.trim() };
+              });
+            }}
+          />
+
+          {/* Divider between voice and text */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBlockEnd: '1rem' }}>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+            <span style={{ fontSize: '0.775rem', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>or type below</span>
+            <div style={{ flex: 1, height: '1px', background: '#E2E8F0' }} />
+          </div>
+
           {/* Story Narrative Textarea */}
           <Field label="What happened?" hint="Describe the incident naturally. You can correct details on the next step.">
             <textarea
@@ -542,6 +564,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
               style={{ width: '100%', padding: '0.85rem', borderRadius: '8px', border: '1.5px solid #CBD5E1', fontSize: '0.95rem', fontFamily: 'inherit', lineHeight: 1.5, outline: 'none' }}
             />
           </Field>
+
 
           {/* Safety warning */}
           <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '8px', padding: '0.75rem 1rem', marginBlockEnd: '1.25rem', fontSize: '0.85rem', color: '#92400E', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -563,7 +586,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
 
           {/* Disclosure notice */}
           <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '0.75rem 1rem', marginBlockEnd: '1.75rem', fontSize: '0.825rem', color: '#475569' }}>
-            <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', marginEnd: '0.4rem' }}>Demo</span>
+            <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.7rem', fontWeight: 700, padding: '0.1rem 0.4rem', borderRadius: '4px', marginInlineEnd: '0.4rem' }}>Demo</span>
             We’ll organise your description into editable details. This does not determine the legal category, and you can correct everything before continuing.
           </div>
 
@@ -602,14 +625,14 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STAGE 2 — REVIEW THE DETAILS (Combined Timeline, Tx & Suspect) */}
+      {/* STAGE 2 — TRANSACTION */}
       {/* ───────────────────────────────────────────────────────────── */}
       {currentStage === 2 && (
         <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
           <header style={{ marginBlockEnd: '1.5rem' }}>
-            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Check what we understood</h1>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Transaction details</h1>
             <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
-              We organised the information from your description. Correct anything that is wrong, and leave anything you do not know blank.
+               Check the date and payment information we understood. Correct anything that is wrong and leave anything you do not know blank.
             </p>
           </header>
 
@@ -625,7 +648,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   type="date"
                   value={draft.date}
                   onChange={(e) => { update('date', e.target.value); update('sourceMap', { ...draft.sourceMap, date: 'user' }); }}
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Approximate Time" sourceState={draft.sourceMap.time} optional>
@@ -633,7 +656,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   type="time"
                   value={draft.time}
                   onChange={(e) => { update('time', e.target.value); update('sourceMap', { ...draft.sourceMap, time: 'user' }); }}
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
             </div>
@@ -653,26 +676,27 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.amount}
                   onChange={(e) => { update('amount', e.target.value); update('sourceMap', { ...draft.sourceMap, amount: 'user' }); }}
                   placeholder="e.g. 48500"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '0.95rem', fontWeight: 600 }}
+                  className="cfr-input-control"
+                  style={{ fontWeight: 600 }}
                 />
               </Field>
               <Field label="Payment Method" sourceState={draft.sourceMap.paymentMethod}>
                 <select
                   value={draft.paymentMethod}
                   onChange={(e) => { update('paymentMethod', e.target.value); update('sourceMap', { ...draft.sourceMap, paymentMethod: 'user' }); }}
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                  className="cfr-input-control"
                 >
                   <option value="">Select method...</option>
                   {paymentMethods.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
               </Field>
-              <Field label="Your Bank / Payment App" sourceState={draft.sourceMap.provider} optional>
+              <Field label="Bank / Wallet / Platform" sourceState={draft.sourceMap.provider} optional>
                 <input
                   type="text"
                   value={draft.provider}
                   onChange={(e) => { update('provider', e.target.value); update('sourceMap', { ...draft.sourceMap, provider: 'user' }); }}
                   placeholder="e.g. SBI, HDFC Bank, PhonePe"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Transaction / UTR Reference ID" sourceState={draft.sourceMap.transactionId} optional>
@@ -681,7 +705,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.transactionId}
                   onChange={(e) => { update('transactionId', e.target.value); update('sourceMap', { ...draft.sourceMap, transactionId: 'user' }); }}
                   placeholder="e.g. TEST20260827001"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Recipient UPI ID / Account Number" sourceState={draft.sourceMap.recipient} optional>
@@ -690,11 +714,44 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.recipient}
                   onChange={(e) => { update('recipient', e.target.value); update('sourceMap', { ...draft.sourceMap, recipient: 'user' }); }}
                   placeholder="e.g. testmerchant@upi"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
             </div>
           </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => update('step', 1)}
+              className="ux4g-btn ux4g-btn-outline-primary"
+              style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
+            >
+              ← Back to what happened
+            </button>
+            <button
+              type="button"
+              onClick={() => update('step', 3)}
+              className="ux4g-btn ux4g-btn-primary"
+              style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
+            >
+              Continue to suspect details →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────────────────────────────────────────────────── */}
+      {/* STAGE 3 — SUSPECT */}
+      {/* ──────────────────────────────────────────────────────────── */}
+      {currentStage === 3 && (
+        <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <header style={{ marginBlockEnd: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Suspect and contact details</h1>
+            <p style={{ fontSize: '0.95rem', color: '#475569', margin: 0, lineHeight: 1.4 }}>
+              Add only information you already know. Every field on this step can be left blank.
+            </p>
+          </header>
 
           {/* SECTION C: PERSON, ACCOUNT OR ORGANISATION INVOLVED */}
           <div style={{ marginBlockEnd: '1.5rem' }}>
@@ -753,7 +810,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.suspectDisplayName}
                   onChange={(e) => update('suspectDisplayName', e.target.value)}
                   placeholder="e.g. Officer Sharma, @trading_guru"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Organisation They Claimed to Represent" optional>
@@ -762,7 +819,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.suspectOrgClaimed}
                   onChange={(e) => update('suspectOrgClaimed', e.target.value)}
                   placeholder="e.g. Bank fraud department, Police, Customs"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Caller / Contact Phone Number" optional>
@@ -771,7 +828,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.suspectPhone}
                   onChange={(e) => update('suspectPhone', e.target.value)}
                   placeholder="e.g. +91 98765 43210"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Website Link or App Name" optional>
@@ -780,7 +837,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.suspectWebsite}
                   onChange={(e) => update('suspectWebsite', e.target.value)}
                   placeholder="e.g. https://scam-site.example"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
             </div>
@@ -794,15 +851,15 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
             <button
               type="button"
-              onClick={() => update('step', 1)}
+              onClick={() => update('step', 2)}
               className="ux4g-btn ux4g-btn-outline-primary"
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
             >
-              ← Back to description
+              ← Back to transaction
             </button>
             <button
               type="button"
-              onClick={() => update('step', 3)}
+              onClick={() => update('step', 4)}
               className="ux4g-btn ux4g-btn-primary"
               style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
             >
@@ -813,9 +870,9 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STAGE 3 — ADD EVIDENCE */}
+      {/* STAGE 4 — ADD EVIDENCE */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {currentStage === 3 && (
+      {currentStage === 4 && (
         <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
           <header style={{ marginBlockEnd: '1.5rem' }}>
             <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Add any evidence you have</h1>
@@ -830,13 +887,35 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           </div>
 
           {/* Upload Drop Zone */}
-          <div style={{ border: '2px dashed #CBD5E1', borderRadius: '12px', padding: '2rem 1.5rem', textAlign: 'center', background: '#F8FAFC', marginBlockEnd: '1.5rem' }}>
-            <span className="ux4g-icon-outlined" style={{ fontSize: '2.5rem', color: '#1E40AF', marginBlockEnd: '0.5rem' }}>cloud_upload</span>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.25rem 0' }}>Upload transaction receipt, screenshot, or call log</h3>
-            <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 1rem 0' }}>Supports PNG, JPG, PDF up to 10 MB per file</p>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: '2px dashed #CBD5E1',
+            borderRadius: '12px',
+            padding: '2rem 1.5rem',
+            textAlign: 'center',
+            background: '#F8FAFC',
+            marginBlockEnd: '1.5rem'
+          }}>
+            <div style={{
+              width: '56px',
+              height: '56px',
+              borderRadius: '50%',
+              background: '#EFF6FF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBlockEnd: '0.85rem'
+            }}>
+              <span className="ux4g-icon-outlined" style={{ fontSize: '2rem', color: '#1E40AF', display: 'block' }}>cloud_upload</span>
+            </div>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: '#0F172A', margin: '0 0 0.35rem 0' }}>Upload transaction receipt, screenshot, or call log</h3>
+            <p style={{ fontSize: '0.825rem', color: '#64748B', margin: '0 0 1.25rem 0' }}>Supports PNG, JPG, PDF up to 10 MB per file</p>
             
-            <label className="ux4g-btn ux4g-btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <span className="ux4g-icon-outlined" style={{ fontSize: '1.1rem' }}>attach_file</span>
+            <label className="ux4g-btn ux4g-btn-primary" style={{ padding: '0.55rem 1.35rem', fontSize: '0.875rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', borderRadius: '6px' }}>
+              <span className="ux4g-icon-outlined" style={{ fontSize: '1.15rem' }}>attach_file</span>
               Choose file from device
               <input type="file" onChange={handleAddEvidenceFile} style={{ display: 'none' }} accept="image/*,.pdf" />
             </label>
@@ -880,17 +959,17 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
             <button
               type="button"
-              onClick={() => update('step', 2)}
+              onClick={() => update('step', 3)}
               className="ux4g-btn ux4g-btn-outline-primary"
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
             >
-              ← Back to details
+              ← Back to suspect details
             </button>
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               {draft.evidence.length === 0 && (
                 <button
                   type="button"
-                  onClick={() => update('step', 4)}
+                  onClick={() => update('step', 5)}
                   className="ux4g-btn ux4g-btn-outline-primary"
                   style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
                 >
@@ -899,7 +978,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
               )}
               <button
                 type="button"
-                onClick={() => update('step', 4)}
+                onClick={() => update('step', 5)}
                 className="ux4g-btn ux4g-btn-primary"
                 style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
               >
@@ -911,9 +990,9 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STAGE 4 — ABOUT YOU */}
+      {/* STAGE 5 — YOUR DETAILS */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {currentStage === 4 && (
+      {currentStage === 5 && (
         <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
           <header style={{ marginBlockEnd: '1.5rem' }}>
             <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0F172A', margin: '0 0 0.35rem 0' }}>About you</h1>
@@ -977,7 +1056,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.orgName}
                       onChange={(e) => update('orgName', e.target.value)}
                       placeholder="e.g. Acme Technologies Pvt Ltd"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -985,7 +1064,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                     <select
                       value={draft.orgType}
                       onChange={(e) => update('orgType', e.target.value)}
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                      className="cfr-input-control"
                     >
                       <option value="Private Company">Private Limited / Public Co</option>
                       <option value="LLP / Partnership">Partnership / LLP</option>
@@ -1002,7 +1081,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.orgRegId}
                       onChange={(e) => update('orgRegId', e.target.value)}
                       placeholder="e.g. 27AAAAA0000A1Z5 / U12345MH2020PTC123456"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                      className="cfr-input-control"
                     />
                   </Field>
                 </div>
@@ -1024,7 +1103,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.fullName}
                       onChange={(e) => update('fullName', e.target.value)}
                       placeholder="e.g. Priya Sharma"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1034,7 +1113,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.reporterDesignation}
                       onChange={(e) => update('reporterDesignation', e.target.value)}
                       placeholder="e.g. IT Security Manager / Director / Legal Counsel"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1044,7 +1123,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.mobile}
                       onChange={(e) => update('mobile', e.target.value)}
                       placeholder="10-digit mobile number"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1054,7 +1133,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.email}
                       onChange={(e) => update('email', e.target.value)}
                       placeholder="nodal-cyber@company.com"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
                 </div>
@@ -1068,7 +1147,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                     value={draft.state}
                     onChange={(e) => update('state', e.target.value)}
                     placeholder="e.g. Maharashtra, Delhi"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    className="cfr-input-control"
                   />
                 </Field>
                 <Field label="City / Head Office Location">
@@ -1077,7 +1156,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                     value={draft.city}
                     onChange={(e) => update('city', e.target.value)}
                     placeholder="e.g. Mumbai, New Delhi"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    className="cfr-input-control"
                   />
                 </Field>
               </div>
@@ -1102,7 +1181,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.victimName}
                       onChange={(e) => update('victimName', e.target.value)}
                       placeholder="e.g. Ramesh Kumar (Father)"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1112,7 +1191,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.victimMobile}
                       onChange={(e) => update('victimMobile', e.target.value)}
                       placeholder="10-digit mobile number"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                      className="cfr-input-control"
                     />
                   </Field>
                 </div>
@@ -1134,7 +1213,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.fullName}
                       onChange={(e) => update('fullName', e.target.value)}
                       placeholder="e.g. Rahul Sharma"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1144,7 +1223,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.mobile}
                       onChange={(e) => update('mobile', e.target.value)}
                       placeholder="10-digit mobile number"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
 
@@ -1154,7 +1233,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                       value={draft.email}
                       onChange={(e) => update('email', e.target.value)}
                       placeholder="name@example.com"
-                      style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                      className="cfr-input-control"
                     />
                   </Field>
                 </div>
@@ -1195,7 +1274,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                     value={draft.state}
                     onChange={(e) => update('state', e.target.value)}
                     placeholder="e.g. Maharashtra, Delhi"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    className="cfr-input-control"
                   />
                 </Field>
                 <Field label="District / City">
@@ -1204,7 +1283,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                     value={draft.city}
                     onChange={(e) => update('city', e.target.value)}
                     placeholder="e.g. Mumbai, New Delhi"
-                    style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                    className="cfr-input-control"
                   />
                 </Field>
               </div>
@@ -1218,7 +1297,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.fullName}
                   onChange={(e) => update('fullName', e.target.value)}
                   placeholder="e.g. Rahul Sharma"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Mobile Number">
@@ -1227,7 +1306,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.mobile}
                   onChange={(e) => update('mobile', e.target.value)}
                   placeholder="10-digit mobile number"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="Email Address" optional>
@@ -1236,7 +1315,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.email}
                   onChange={(e) => update('email', e.target.value)}
                   placeholder="name@example.com"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="State / Union Territory">
@@ -1245,7 +1324,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.state}
                   onChange={(e) => update('state', e.target.value)}
                   placeholder="e.g. Maharashtra, Delhi"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
               <Field label="District / City">
@@ -1254,7 +1333,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
                   value={draft.city}
                   onChange={(e) => update('city', e.target.value)}
                   placeholder="e.g. Mumbai, New Delhi"
-                  style={{ width: '100%', padding: '0.55rem', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  className="cfr-input-control"
                 />
               </Field>
             </div>
@@ -1272,7 +1351,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
             <button
               type="button"
-              onClick={() => update('step', 3)}
+              onClick={() => update('step', 4)}
               className="ux4g-btn ux4g-btn-outline-primary"
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
             >
@@ -1280,7 +1359,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
             </button>
             <button
               type="button"
-              onClick={() => update('step', 5)}
+              onClick={() => update('step', 6)}
               className="ux4g-btn ux4g-btn-primary"
               style={{ padding: '0.5rem 1.5rem', fontSize: '0.875rem' }}
             >
@@ -1291,9 +1370,9 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STAGE 5 — REVIEW AND PREPARE */}
+      {/* STAGE 6 — REVIEW AND PREPARE */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {currentStage === 5 && (
+      {currentStage === 6 && (
         <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
           {/* Status Notice */}
           <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '1.15rem', marginBlockEnd: '1.5rem' }}>
@@ -1333,11 +1412,22 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
               </div>
             </div>
 
+            {/* Suspect Summary */}
+            <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>3. Suspect &amp; Contact Details</h3>
+                <button type="button" onClick={() => update('step', 3)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: '#334155', margin: 0 }}>
+                {[draft.contactChannel, draft.suspectDisplayName, draft.suspectPhone, draft.suspectWebsite].filter(Boolean).join(' · ') || 'No suspect details provided.'}
+              </p>
+            </div>
+
             {/* Evidence Summary */}
             <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>3. Attached Evidence</h3>
-                <button type="button" onClick={() => update('step', 3)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>4. Attached Evidence</h3>
+                <button type="button" onClick={() => update('step', 4)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
               </div>
               <p style={{ fontSize: '0.85rem', color: '#334155', margin: 0 }}>
                 {draft.evidence.length > 0 ? `${draft.evidence.length} evidence attachment(s) included.` : 'No evidence attachments added.'}
@@ -1347,8 +1437,8 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
             {/* About You / Reporter & Victim Summary */}
             <div style={{ border: '1px solid #E2E8F0', borderRadius: '10px', padding: '1rem', background: '#F8FAFC' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBlockEnd: '0.5rem' }}>
-                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>4. Reporter & Victim Contact Details</h3>
-                <button type="button" onClick={() => update('step', 4)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
+                <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0F172A', margin: 0 }}>5. Reporter & Victim Contact Details</h3>
+                <button type="button" onClick={() => update('step', 5)} style={{ background: 'none', border: 'none', color: '#1D4ED8', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>Edit</button>
               </div>
 
               {draft.reporterRelation === 'org' ? (
@@ -1397,7 +1487,7 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', borderTop: '1px solid #E2E8F0', paddingTop: '1.25rem' }}>
             <button
               type="button"
-              onClick={() => update('step', 4)}
+              onClick={() => update('step', 5)}
               className="ux4g-btn ux4g-btn-outline-primary"
               style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}
             >
@@ -1420,9 +1510,9 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
       )}
 
       {/* ───────────────────────────────────────────────────────────── */}
-      {/* STAGE 6 — COMPLAINT SUBMISSION SUCCESS CONFIRMATION */}
+      {/* STAGE 7 — COMPLAINT SUBMISSION SUCCESS CONFIRMATION */}
       {/* ───────────────────────────────────────────────────────────── */}
-      {currentStage === 6 && (
+      {currentStage === 7 && (
         <div className="reporting-card-stage" style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '16px', padding: '2.5rem 2rem', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)', textAlign: 'center' }}>
           
           <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', color: '#15803D', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginBlockEnd: '1.25rem' }}>
@@ -1461,11 +1551,11 @@ export function ReportFlow({ onComplete }: { onComplete?: () => void }) {
           {/* Action buttons */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <a
-              href="/track"
+              href="/complaint/local"
               className="ux4g-btn ux4g-btn-primary"
               style={{ padding: '0.65rem 2rem', fontSize: '0.95rem', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              <span>Go to Complaint Tracking Page →</span>
+              <span>Go to Official Complaint Tracking Page →</span>
             </a>
 
             <button

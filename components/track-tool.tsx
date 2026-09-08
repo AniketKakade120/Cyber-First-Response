@@ -10,7 +10,7 @@ export function TrackTool() {
 
   const lookup = () => {
     const defaultReport = {
-      id: ack.trim() ? ack.trim().toUpperCase() : 'CFR-2026-89412',
+      id: ack.trim() ? ack.trim().toUpperCase() : 'NCRP-2026-0827-48391',
       at: '2026-08-27T15:15:00.000Z',
       summary: 'On 27 August 2026 at approximately 3:15 PM, I received a phone call from a person claiming to be from my bank’s fraud department. The caller said my account would be blocked unless I completed an urgent verification payment. I was asked to transfer ₹48,500 to the UPI ID testmerchant@upi. After making the payment, the caller stopped responding, and I realised it was a scam. The transaction reference number shown in my banking app is TEST20260827001.',
       amount: '48500',
